@@ -28,20 +28,25 @@ while True:
         #print(command)
         if command[0] == 'ADD':
             print('Adding funds to user account')
-            connectionSocket.send("Funds added".encode())
+            addInfo = command[2] + " was deposited into " + command[1] + "'s account."
+            connectionSocket.send(addInfo.encode())
         elif command[0] == 'BUY':
             print('Buying Stonks')
             connectionSocket.send("Stonks added".encode())
         elif command[0] == 'QUOTE':
             print('Checking quote...')
-            quoteRequest = command[1] + "," + command[2]
-            #print(quoteRequest)
+            quoteRequest = command[2] + "," + command[1] + "\n"
+            #print(quoteRequest.encode())
             quoteServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             quoteServer.connect(('quoteserver.seng.uvic.ca',4444))
             quoteServer.send(quoteRequest)
             quote = quoteServer.recv(1024)
+            #print(quote.decode())
             quoteServer.close()
-            connectionSocket.send(quote.encode())
+            quoteInfo = quote.decode().split(",")
+            #print(quoteInfo)
+            quotePrice = "Price of " + quoteInfo[1] + " is " + quoteInfo[0]
+            connectionSocket.send(quotePrice.encode())
         else:
             connectionSocket.send("Command could not be found".encode())
         connectionSocket.close()
