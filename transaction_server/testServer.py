@@ -32,6 +32,16 @@ while True:
         elif command[0] == 'BUY':
             print('Buying Stonks')
             connectionSocket.send("Stonks added".encode())
+        elif command[0] == 'QUOTE':
+            print('Checking quote...')
+            quoteRequest = command[1] + "," + command[2]
+            #print(quoteRequest)
+            quoteServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            quoteServer.connect(('quoteserver.seng.uvic.ca',4444))
+            quoteServer.send(quoteRequest)
+            quote = quoteServer.recv(1024)
+            quoteServer.close()
+            connectionSocket.send(quote.encode())
         else:
             connectionSocket.send("Command could not be found".encode())
         connectionSocket.close()
