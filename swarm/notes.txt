@@ -1,0 +1,3 @@
+git config --global http.sslverify false
+or
+export GIT_SSL_NO_VERIFY=1

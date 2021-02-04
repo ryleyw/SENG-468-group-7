@@ -1,0 +1,1 @@
+docker build -t transaction_server ./transaction_image/
