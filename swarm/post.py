@@ -1,6 +1,6 @@
 import requests
 
-url = 'http://localhost:80/api/command/'
+url = 'http://localhost:5000/'
 data = {
     'command': 'AdD',
     'userid': 'basics',

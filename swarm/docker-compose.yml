@@ -140,21 +140,34 @@ services:
         ports:
             - "80:3000"
             
-    # express/react transaction_server
+    # python flask transaction_server
     transaction_server:
         hostname: transaction_server
         container_name: transaction_server
         image: transaction_server:latest
         deploy:
             replicas: 1
-            placement:
-                preferences:
-                    - spread: node.labels.router
-        command: /bin/bash -c "cd /usr/src/transaction_server && npm install -y && npm start"
+        command: /bin/bash -c "cd /usr/src/transaction_server && pip install -r requirements.txt && python app.py"
         networks:
             - "cluster_net"
         ports:
-            - "81:3000"
+            - "81:5000"        
+            
+    # express/react transaction_server
+    #transaction_server:
+    #    hostname: transaction_server
+    #    container_name: transaction_server
+    #    image: transaction_server:latest
+    #    deploy:
+    #        replicas: 1
+    #        placement:
+    #            preferences:
+    #                - spread: node.labels.router
+    #    command: /bin/bash -c "cd /usr/src/transaction_server && npm install -y && npm start"
+    #    networks:
+    #        - "cluster_net"
+    #    ports:
+    #        - "81:3000"
         
 networks:
     cluster_net:

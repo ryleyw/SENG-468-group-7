@@ -3,7 +3,7 @@ var router = express.Router();
 const axios = require('axios');
 
 function send_to_transaction(res, data) {
-	axios.post('http://transaction_server:3000/api/command/', data).
+	axios.post('http://transaction_server:5000/', data).
 		then((response) => {
 			console.log(response.data);
 			res.send({
@@ -44,7 +44,7 @@ router.post('/command/', (req, res, next) => {
 });
 
 router.post('/test/', (req, res, next) => {
-	axios.post('http://transaction_server:3000/api/test/', {
+	axios.post('http://transaction_server:5000/', {
 		body: 'hi'
 	}).then((response) => {
 		console.log(response.data);
