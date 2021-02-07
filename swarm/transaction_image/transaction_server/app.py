@@ -68,7 +68,25 @@ def handle_commands():
 			
 		# haven't implemented "dumplog" command
 		
-		return { 'success': 'false', 'message': 'Commmand not recognized.' }		
+		return { 'success': 'false', 'message': 'Commmand not recognized.' }
+
+def get_quote(userid, stock):
+	# this function will send a request to the quote server then return the result
+	# for now we just return fake results
+	# quote,sym,userid,timestamp,cryptokey
+	# must send request to quoteserver.seng.uvic.ca:4444
+	# request is in the form "stock, userid" (ex: "ABC, patrick")
+	
+	# example return from quoteserver:
+	# result = b'1.01,ABC,userid,1612739531162,xAnC1CbuaY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
+	
+	# generate a fake quoteserver response (the hash and timestamp will always be the same, but shouldnt matter for development)
+	#rounded_number = round(random.uniform(greaterThan, lessThan), digits)
+	random_price = round(random.uniform(0.25, 20.00), 2)
+	result_str = str(random_price) + ',' + stock + ',' + userid + ',1612739531162,xAnC1CbuaY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
+	result = result_str.encode()
+	
+	return result.decode("utf-8")
 		
 def handle_add(userid, amount):
 	foundUser = users.find_one({"Username": userid});
