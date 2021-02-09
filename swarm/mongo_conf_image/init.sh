@@ -6,7 +6,7 @@ then
 
 	mongo s0rs0:27017 << EOF
 use stocks;
-db.users.createIndex({ Username:1 });
+db.users.createIndex({ username:1 });
 EOF
 
 	sleep 15
@@ -14,7 +14,7 @@ EOF
 	mongo mongos0:27017 << EOF
 db.adminCommand({ addShard: "s0/s0rs0:27017" });
 db.adminCommand({ enableSharding: "stocks" });
-db.adminCommand({ shardCollection: "stocks.users", key: {"Username":1}});
+db.adminCommand({ shardCollection: "stocks.users", key: {"username":1}});
 db.settings.save( {_id:"chunksize", value: 2} );
 EOF
 	
