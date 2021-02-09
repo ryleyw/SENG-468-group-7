@@ -4,7 +4,11 @@ from pymongo import MongoClient
 import time
 import random
 
-# buys and sells (with their commit and cancel counterparts) have been implemented. next to do is the set buys and set sells and then to implement the logging system through it all.
+# i am currently using 0 and 1 instead of true and false so that there are no
+# misscomunications between mongodb, python, and js
+# however it's plausible that boolean values would require less space (int might be 32 or even 64 bit, whereas bool could be 8 bit)
+
+buys and sells (with their commit and cancel counterparts) have been implemented. next to do is the set buys and set sells and then to implement the logging system through it all.
 
 app = Flask(__name__)
 
@@ -532,24 +536,280 @@ def handle_set_buy_amount(userid, stock, amount):
 		}
 		
 	# user has enough money in their account so now we deduct the money 
-	# from their account
+	foundUser['cash'] -= amount
 	
-	return {'success': 1, 'message': 'This is the set_buy_amount command.'}
+	# check if the user already has a buy trigger for this stock
+	
+	if (stock in foundUser['buy_trigger']):
+		# put the money from the previous order back into the user's account so that we can make the new order
+		foundUser['cash'] += foundUser['buy_trigger'][stock]['total_cash']
+	
+	# setup the buy_trigger
+	foundUser['buy_trigger'][stock] = {
+		'unit_price': None,
+		'total_cash': amount,
+		'active': 0
+	}
+	
+	result = update_user_in_db(foundUser)
+	
+	if (result['success'] == 1):
+		return {
+			'success': 1,
+			'message': f'Set buy amount confirmed, but still need to set buy trigger.',
+			'result': result['user']
+		}
+	
+	return {
+		'success': 0,
+		'message': 'Database write was unsuccessful',
+		'result': get_user_from_db(userid),
+		'error': result['error']
+	}
 
 def handle_set_buy_trigger(userid, stock, amount):
-	return {'success': 1, 'message': 'This is the set_buy_trigger command.'}
+	foundUser = get_user_from_db(userid)
+	
+	if (foundUser == None):
+		return {
+			'success': 0,
+			'message': 'User has not added any money to their account yet.',
+			'error': 'User does not exist in DB.'
+		}
+		
+	if (stock not in foundUser['buy_trigger']):
+		return {
+			'success': 0,
+			'message': 'User does not yet have a buy amount set for this stock.',
+			'error': 'User must execute a set_buy_amount for the stock first.',
+			'result': foundUser
+		}
+		
+	if (foundUser['buy_trigger'][stock]['total_cash'] < amount):
+		return {
+			'success': 0,
+			'message': 'Cash committed to the buy cannot be less than the buy trigger.',
+			'error': 'Not enough cash in the buy trigger to afford 1 stock at this price.',
+			'result': foundUser
+		}
+		
+	foundUser['buy_trigger'][stock]['unit_price'] = amount
+	foundUser['buy_trigger'][stock]['active'] = 1
+	
+	result = update_user_in_db(foundUser)
+	
+	if (result['success'] == 1):
+		return {
+			'success': 1,
+			'message': f'Set buy trigger confirmed.',
+			'result': result['user']
+		}
+	
+	return {
+		'success': 0,
+		'message': 'Database write was unsuccessful',
+		'result': get_user_from_db(userid),
+		'error': result['error']
+	}
 
 def handle_cancel_set_buy(userid, stock):
-	return {'success': 1, 'message': 'This is the cancel_set_buy command.'}
+	foundUser = get_user_from_db(userid)
+	
+	if (foundUser == None):
+		return {
+			'success': 0,
+			'message': 'User has not added any money to their account yet.',
+			'error': 'User does not exist in DB.'
+		}
+		
+	if (stock not in foundUser['pending_buy']):
+		return {
+			'success': 1,
+			'message': 'User does not currently have a pending buy for this stock so nothing happened.',
+			'result': foundUser
+		}
+		
+	foundUser['cash'] += foundUser['pending_buy'][stock]['total_cash']
+	
+	del foundUser['pending_buy'][stock]
+	
+	result = update_user_in_db(foundUser)
+	
+	if (result['success'] == 1):
+		return {
+			'success': 1,
+			'message': f'Set buy trigger cancelled and money has been added back to the user\'s account.',
+			'result': result['user']
+		}
+	
+	return {
+		'success': 0,
+		'message': 'Database write was unsuccessful',
+		'result': get_user_from_db(userid),
+		'error': result['error']
+	}
 
 def handle_set_sell_amount(userid, stock, amount):
-	return {'success': 1, 'message': 'This is the set_sell_amount command.'}
+	foundUser = get_user_from_db(userid)
+	
+	if (foundUser == None):
+		return {
+			'success': 0,
+			'message': 'User has not added any money to their account yet.',
+			'error': 'User does not exist in DB.'
+		}
+		
+	if (stock not in foundUser['stocks']):
+		return {
+			'success': 0,
+			'message': 'User does not currently own any of that stock.',
+			'error': 'User doesn\'t own this stock yet.',
+			'result': foundUser
+		}
+		
+	if (foundUser['stocks'][stock]['units'] < amount):
+		return {
+			'success': 0,
+			'message': 'User does not currently own enough of the stock.',
+			'error': 'User doesn\'t own enough of this stock.',
+			'result': foundUser
+		}
+		
+	if (stock in foundUser['pending_sell']):
+		# there is already a sell trigger for this stock so we will overwrite it
+		if (foundUser['pending_sell'][stock]['active']):
+			# the trigger is active which means the stocks have already been deducted from the user's account
+			# so first, we need to put those stocks back into their account
+			foundUser['stocks'][stock]['units'] += foundUser['pending_sell'][stock]['units']
+			foundUser['stocks'][stock]['cost'] += foundUser['pending_sell'][stock]['units'] * foundUser['pending_sell'][stock]['unit_price']
+	
+	foundUser['pending_sell'][stock] = {
+		'unit_price': None,
+		'units': amount,
+		'active': 0
+	}
+			
+	result = update_user_in_db(foundUser)
+	
+	if (result['success'] == 1):
+		return {
+			'success': 1,
+			'message': f'Set sell amount confirmed, but still need to set sell trigger.',
+			'result': result['user']
+		}
+	
+	return {
+		'success': 0,
+		'message': 'Database write was unsuccessful',
+		'result': get_user_from_db(userid),
+		'error': result['error']
+	}
 
 def handle_set_sell_trigger(userid, stock, amount):
-	return {'success': 1, 'message': 'This is the set_sell_trigger command.'}
+	foundUser = get_user_from_db(userid)
+	
+	if (foundUser == None):
+		return {
+			'success': 0,
+			'message': 'User has not added any money to their account yet.',
+			'error': 'User does not exist in DB.'
+		}
+		
+	if (stock not in foundUser['pending_sell']):
+		return {
+			'success': 0,
+			'message': 'User has not yet created a pending sell for this stock.',
+			'error': 'User must execute a set_sell_amount for this stock first.',
+			'result': foundUser
+		}
+		
+	if (stock not in foundUser['stocks']):
+		return {
+			'success': 0,
+			'message': 'User doesn\'t currently own any of that stock.',
+			'error': 'User must have sold the stock after setting the sell amount.',
+			'result': foundUser
+		}
+		
+	if (foundUser['stocks'][stock]['units'] < foundUser['pending_sell'][stock]['units']):
+		return {
+			'success': 0,
+			'message': 'User doesn\'t currently own enough of the stock. Try a new set_sell_amount.',
+			'error': 'User must have sold some of the stock after setting the sell amount.',
+			'result': foundUser
+		}
+		
+	foundUser['stocks'][stock]['units'] -= foundUser['pending_sell'][stock]['units']
+	foundUser['stocks'][stock]['cost'] -= amount * foundUser['pending_sell'][stock]['units']
+	
+	if (foundUser['stocks'][stock]['units'] < 1):
+		# user has no more of this stock so we will remove it from their list
+		del foundUser['stocks'][stock]
+		
+	foundUser['pending_sell'][stock]['unit_price'] = amount
+	foundUser['pending_sell'][stock]['active'] = 1
+	
+	result = update_user_in_db(foundUser)
+	
+	if (result['success'] == 1):
+		return {
+			'success': 1,
+			'message': f'Set sell trigger confirmed.',
+			'result': result['user']
+		}
+	
+	return {
+		'success': 0,
+		'message': 'Database write was unsuccessful',
+		'result': get_user_from_db(userid),
+		'error': result['error']
+	}
+		
 
 def handle_cancel_set_sell(userid, stock):
-	return {'success': 1, 'message': 'This is the cancel_set_sell command.'}
+	foundUser = get_user_from_db(userid)
+	
+	if (foundUser == None):
+		return {
+			'success': 0,
+			'message': 'User has not added any money to their account yet.',
+			'error': 'User does not exist in DB.'
+		}
+		
+	if (stock not in foundUser['pending_sell']):
+		return {
+			'success': 1,
+			'message': 'User does not currently have a pending sell for this stock so nothing happened.',
+			'result': foundUser
+		}
+		
+	if (stock not in foundUser['stocks']):
+		# stock no longer exists in their account so we need to create it again
+		foundUser['stocks'][stock] = {
+			'units': foundUser['pending_sell'][stock]['units'],
+			'cost': foundUser['pending_sell'][stock]['units'] * foundUser['pending_sell'][stock]['unit_price']
+		}
+	else:
+		foundUser['stocks'][stock]['units'] += foundUser['pending_sell'][stock]['units']
+		foundUser['stocks'][stock]['cost'] += foundUser['pending_sell'][stock]['units'] * foundUser['pending_sell'][stock]['unit_price']
+	
+	del foundUser['pending_sell'][stock]
+	
+	result = update_user_in_db(foundUser)
+	
+	if (result['success'] == 1):
+		return {
+			'success': 1,
+			'message': f'Set sell trigger cancelled and stock units have been added back to the user\'s account.',
+			'result': result['user']
+		}
+	
+	return {
+		'success': 0,
+		'message': 'Database write was unsuccessful',
+		'result': get_user_from_db(userid),
+		'error': result['error']
+	}
 
 def handle_display_summary(userid):
 	return {'success': 1, 'message': 'This is the display_summary command.'}
@@ -563,7 +823,7 @@ def create_user(userid):
 		'cash': 75.0,
 		'stocks': {
 			'ABC': {
-				'cost': 29.80			# total amount of cash spent on these stocks.
+				'cost': 29.80			# total amount of cash spent on these stocks. (just a stat for curiosity)
 				'units': 50				# number of stocks that are owned by this user
 			},
 			'XYZ': {
@@ -585,18 +845,18 @@ def create_user(userid):
 			'total_price': 358.5,		
 			'time': 1289753989			# number of seconds since epoch
 		}
-		'buy_triggers' = {
-			'ABC': {
-				'num_stocks': 3,
+		'buy_triggers' = {				# we assume that each stock can only have 1 buy trigger active
+			'ABC': {					# so if we tried to add another buy trigger for ABC, it would overwrite the current one
 				'unit_price': 20.50,
-				'total_price': 61.50,	# this amount has already been deducted from their 'cash' amount
+				'total_cash': 61.50,	# this amount has already been deducted from their 'cash' amount
+				'active': 1
 			},
 		}
 		'sell_triggers' = {				# im not sure if we should remove the stock units from the 'stocks' attribute when a sell_trigger is created
-			'ABC': {
-				'num_stocks': 3,		
-				'unit_price': 20.50,
-				'total_price': 61.50,	# this amount has already been deducted from their 'cash' amount
+			'ABC': {	
+				'unit_price': None,		# value specified in set_buy_trigger
+				'units': 5,				# value specified in set_buy_amount. the number of stocks that are to be sold. stocks aren't deducted from user's account until the unit_price (set_buy_trigger) has been set
+				'active': 0
 			},
 		}
 	}
