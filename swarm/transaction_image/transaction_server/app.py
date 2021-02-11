@@ -8,7 +8,7 @@ import random
 # misscomunications between mongodb, python, and js
 # however it's plausible that boolean values would require less space (int might be 32 or even 64 bit, whereas bool could be 8 bit)
 
-buys and sells (with their commit and cancel counterparts) have been implemented. next to do is the set buys and set sells and then to implement the logging system through it all.
+# buys and sells (with their commit and cancel counterparts) have been implemented. next to do is the set buys and set sells and then to implement the logging system through it all.
 
 app = Flask(__name__)
 
