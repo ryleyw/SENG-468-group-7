@@ -58,6 +58,11 @@ docker network inspect <network_id> # to see which containers are currently on t
 
 Troubleshooting:
 
+# these are executed within the mongo shell
+db.users.find() 	# view all current user documents in the db
+db.users.remove({}) # delete all current user documents in the db
+
+# these are executed within the terminal on the same machine as the swarm leader
 docker service ps --no-trunc {serviceName}  # see why a service is crashing
 docker service ls
 docker service logs <service id>
@@ -71,3 +76,19 @@ docker ps # lists the services
 docker exec -it <service_id_from_ps> bash # opens a bash terminal within that specific container
 docker service update --force <service_name> # reloads the service with updated image (first build the new image)
 			(service name ex. cluster_web_app) this is good for when you update something but don't want to reload the whole swarm
+			
+			
+			
+
+to get docker working with the vm:
+
+sudo cd /usr/local/share/ca-certificates/ 
+sudo mkdir uvic-eng
+sudo cp ~/Downloads/Faculty+of+Engineering+CA.crt ./uvic-eng
+sudo chmod 755 uvic-eng
+sudo chmod 644 uvic-eng/Faculty+of+Engineering+CA.crt 
+sudo update-ca-certificates
+sudo vim /etc/systemd/system/docker.service.d/proxy.conf
+change 192.168.1.1 to 192.168.4.1
+sudo systemctl daemon-reload
+sudo systemctl restart docker 

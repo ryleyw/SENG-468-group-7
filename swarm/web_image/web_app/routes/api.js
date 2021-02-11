@@ -5,7 +5,6 @@ const axios = require('axios');
 function send_to_transaction(res, data) {
 	axios.post('http://transaction_server:5000/', data).
 		then((response) => {
-			console.log(response.data);
 			res.send({
 				message: "Success.",
 				data: response.data
