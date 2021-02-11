@@ -3,18 +3,20 @@ from flask import request
 from pymongo import MongoClient
 import time
 import random
+import sys
+import socket
 
 # i am currently using 0 and 1 instead of true and false so that there are no
 # misscomunications between mongodb, python, and js
 # however it's plausible that boolean values would require less space (int might be 32 or even 64 bit, whereas bool could be 8 bit)
 
-# buys and sells (with their commit and cancel counterparts) have been implemented. next to do is the set buys and set sells and then to implement the logging system through it all.
-
 app = Flask(__name__)
 
-client = MongoClient('mongodb://localhost:27018')
+client = MongoClient('mongodb://mongos0:27017')
 stocks_db = client.stocks
 users = stocks_db.users
+skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+skt.connect(('quoteserver.seng.uvic.ca', 4444))
 
 @app.route('/', methods=['GET', 'POST'])
 def handle_commands():
@@ -23,13 +25,16 @@ def handle_commands():
 		
 	elif (request.method == 'POST'):
 		# all of the potential parameters
-		command = request.form.get('command').lower()
-		userid = request.form.get('userid')
-		amount = request.form.get('amount')
-		if (amount):
-			amount = float(amount)
-		stock = request.form.get('stock')
-		filename = request.form.get('filename')
+		# to print to console, use:
+		#print('string here', file=sys.stderr)
+		data = request.json
+		
+		command = data['command'].lower()
+		
+		if ('userid' in data): userid = data['userid']
+		if ('amount' in data): amount = float(data['amount'])
+		if ('stock' in data): stock = data['stock']
+		if ('filename' in data): filename = data['filename']
 		
 		if (command == 'add'):
 			return handle_add(userid, amount)
@@ -96,9 +101,19 @@ def get_quote(userid, stock):
 	
 	# generate a fake quoteserver response (the hash and timestamp will always be the same, but shouldnt matter for development)
 	#rounded_number = round(random.uniform(greaterThan, lessThan), digits)
+	'''
 	random_price = round(random.uniform(0.25, 20.00), 2)
 	example_str = str(random_price) + ',' + stock + ',' + userid + ',1612739531162,xAnC1CbuaY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
 	result = example_str.encode()
+	'''
+	
+	msg = f'{stock},{userid}\n'
+	skt.send(msg.encode())
+	try:
+		result = skt.recv(1024)
+	except:
+		print('Quote server error')
+		return (None, 'Error communicating with quote server')
 	
 	result_str = result.decode('utf-8')
 	quote = result_str.split(',')
@@ -137,7 +152,7 @@ def get_user_from_db(userid):
 	return foundUser
 		
 def handle_add(userid, amount):
-	get_user_from_db(userid)
+	foundUser = get_user_from_db(userid)
 	
 	if (foundUser == None):
 		foundUser = create_user(userid)
@@ -454,6 +469,10 @@ def handle_commit_sell(userid):
 		foundUser['stocks'][stock]['units'] -= foundUser['pending_sell']['num_stocks']
 		foundUser['stocks'][stock]['cost'] -= foundUser['pending_sell']['total_price']	
 		foundUser['stocks'][stock]['cost'] = round(foundUser['stocks'][stock]['cost'], 2)
+		
+		if (foundUser['stocks'][stock]['units'] < 1):
+			# user has no more of this stock so we will remove it from their stock list
+			del foundUser['stocks'][stock]
 	else:
 		# user doesn't currently have the stock which shouldn't happen if we get to this point
 		return {
@@ -540,12 +559,12 @@ def handle_set_buy_amount(userid, stock, amount):
 	
 	# check if the user already has a buy trigger for this stock
 	
-	if (stock in foundUser['buy_trigger']):
+	if (stock in foundUser['buy_triggers']):
 		# put the money from the previous order back into the user's account so that we can make the new order
-		foundUser['cash'] += foundUser['buy_trigger'][stock]['total_cash']
+		foundUser['cash'] += foundUser['buy_triggers'][stock]['total_cash']
 	
 	# setup the buy_trigger
-	foundUser['buy_trigger'][stock] = {
+	foundUser['buy_triggers'][stock] = {
 		'unit_price': None,
 		'total_cash': amount,
 		'active': 0
@@ -577,7 +596,7 @@ def handle_set_buy_trigger(userid, stock, amount):
 			'error': 'User does not exist in DB.'
 		}
 		
-	if (stock not in foundUser['buy_trigger']):
+	if (stock not in foundUser['buy_triggers']):
 		return {
 			'success': 0,
 			'message': 'User does not yet have a buy amount set for this stock.',
@@ -585,7 +604,7 @@ def handle_set_buy_trigger(userid, stock, amount):
 			'result': foundUser
 		}
 		
-	if (foundUser['buy_trigger'][stock]['total_cash'] < amount):
+	if (foundUser['buy_triggers'][stock]['total_cash'] < amount):
 		return {
 			'success': 0,
 			'message': 'Cash committed to the buy cannot be less than the buy trigger.',
@@ -593,8 +612,8 @@ def handle_set_buy_trigger(userid, stock, amount):
 			'result': foundUser
 		}
 		
-	foundUser['buy_trigger'][stock]['unit_price'] = amount
-	foundUser['buy_trigger'][stock]['active'] = 1
+	foundUser['buy_triggers'][stock]['unit_price'] = amount
+	foundUser['buy_triggers'][stock]['active'] = 1
 	
 	result = update_user_in_db(foundUser)
 	
@@ -622,16 +641,16 @@ def handle_cancel_set_buy(userid, stock):
 			'error': 'User does not exist in DB.'
 		}
 		
-	if (stock not in foundUser['pending_buy']):
+	if (stock not in foundUser['buy_triggers']):
 		return {
 			'success': 1,
 			'message': 'User does not currently have a pending buy for this stock so nothing happened.',
 			'result': foundUser
 		}
 		
-	foundUser['cash'] += foundUser['pending_buy'][stock]['total_cash']
+	foundUser['cash'] += foundUser['buy_triggers'][stock]['total_cash']
 	
-	del foundUser['pending_buy'][stock]
+	del foundUser['buy_triggers'][stock]
 	
 	result = update_user_in_db(foundUser)
 	
@@ -675,15 +694,15 @@ def handle_set_sell_amount(userid, stock, amount):
 			'result': foundUser
 		}
 		
-	if (stock in foundUser['pending_sell']):
+	if (stock in foundUser['sell_triggers']):
 		# there is already a sell trigger for this stock so we will overwrite it
-		if (foundUser['pending_sell'][stock]['active']):
+		if (foundUser['sell_triggers'][stock]['active']):
 			# the trigger is active which means the stocks have already been deducted from the user's account
 			# so first, we need to put those stocks back into their account
-			foundUser['stocks'][stock]['units'] += foundUser['pending_sell'][stock]['units']
-			foundUser['stocks'][stock]['cost'] += foundUser['pending_sell'][stock]['units'] * foundUser['pending_sell'][stock]['unit_price']
+			foundUser['stocks'][stock]['units'] += foundUser['sell_triggers'][stock]['units']
+			foundUser['stocks'][stock]['cost'] += foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']
 	
-	foundUser['pending_sell'][stock] = {
+	foundUser['sell_triggers'][stock] = {
 		'unit_price': None,
 		'units': amount,
 		'active': 0
@@ -715,7 +734,7 @@ def handle_set_sell_trigger(userid, stock, amount):
 			'error': 'User does not exist in DB.'
 		}
 		
-	if (stock not in foundUser['pending_sell']):
+	if (stock not in foundUser['sell_triggers']):
 		return {
 			'success': 0,
 			'message': 'User has not yet created a pending sell for this stock.',
@@ -731,7 +750,7 @@ def handle_set_sell_trigger(userid, stock, amount):
 			'result': foundUser
 		}
 		
-	if (foundUser['stocks'][stock]['units'] < foundUser['pending_sell'][stock]['units']):
+	if (foundUser['stocks'][stock]['units'] < foundUser['sell_triggers'][stock]['units']):
 		return {
 			'success': 0,
 			'message': 'User doesn\'t currently own enough of the stock. Try a new set_sell_amount.',
@@ -739,15 +758,15 @@ def handle_set_sell_trigger(userid, stock, amount):
 			'result': foundUser
 		}
 		
-	foundUser['stocks'][stock]['units'] -= foundUser['pending_sell'][stock]['units']
-	foundUser['stocks'][stock]['cost'] -= amount * foundUser['pending_sell'][stock]['units']
+	foundUser['stocks'][stock]['units'] -= foundUser['sell_triggers'][stock]['units']
+	foundUser['stocks'][stock]['cost'] -= amount * foundUser['sell_triggers'][stock]['units']
 	
 	if (foundUser['stocks'][stock]['units'] < 1):
 		# user has no more of this stock so we will remove it from their list
 		del foundUser['stocks'][stock]
 		
-	foundUser['pending_sell'][stock]['unit_price'] = amount
-	foundUser['pending_sell'][stock]['active'] = 1
+	foundUser['sell_triggers'][stock]['unit_price'] = amount
+	foundUser['sell_triggers'][stock]['active'] = 1
 	
 	result = update_user_in_db(foundUser)
 	
@@ -776,7 +795,7 @@ def handle_cancel_set_sell(userid, stock):
 			'error': 'User does not exist in DB.'
 		}
 		
-	if (stock not in foundUser['pending_sell']):
+	if (stock not in foundUser['sell_triggers']):
 		return {
 			'success': 1,
 			'message': 'User does not currently have a pending sell for this stock so nothing happened.',
@@ -786,14 +805,14 @@ def handle_cancel_set_sell(userid, stock):
 	if (stock not in foundUser['stocks']):
 		# stock no longer exists in their account so we need to create it again
 		foundUser['stocks'][stock] = {
-			'units': foundUser['pending_sell'][stock]['units'],
-			'cost': foundUser['pending_sell'][stock]['units'] * foundUser['pending_sell'][stock]['unit_price']
+			'units': foundUser['sell_triggers'][stock]['units'],
+			'cost': foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']
 		}
 	else:
-		foundUser['stocks'][stock]['units'] += foundUser['pending_sell'][stock]['units']
-		foundUser['stocks'][stock]['cost'] += foundUser['pending_sell'][stock]['units'] * foundUser['pending_sell'][stock]['unit_price']
+		foundUser['stocks'][stock]['units'] += foundUser['sell_triggers'][stock]['units']
+		foundUser['stocks'][stock]['cost'] += foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']
 	
-	del foundUser['pending_sell'][stock]
+	del foundUser['sell_triggers'][stock]
 	
 	result = update_user_in_db(foundUser)
 	
@@ -866,7 +885,9 @@ def create_user(userid):
 		'cash': 0.0,
 		'pending_buy': None,
 		'pending_sell': None,
-		'stocks': {}
+		'stocks': {},
+		'buy_triggers': {},
+		'sell_triggers': {}
 	}
 
 if __name__ == "__main__":
