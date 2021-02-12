@@ -2,6 +2,7 @@ import re
 import threading
 import json
 import requests
+import time
 
 workload_filename = "./workloads/workload10.txt"
 url = 'http://localhost:80/api/command/' 		# docker swarm web app
@@ -11,19 +12,20 @@ users = {}
 req_count = {}
 
 def thread_function(userid):
+	s = requests.Session()
 	command_list = users[userid]
 	req_count[userid] = 0
 	for data in command_list:
-		response = requests.post(url, json = data)
+		response = s.post(url, json = data)
 		req_count[userid] += 1
-		
-	print(f'thread for {userid} done')
 		
 
 def main():
 	threads = []
 	
 	i = 0
+
+	start_time = time.time()
 	
 	with open(workload_filename, "r") as infile:
 		for line in infile:
@@ -122,6 +124,9 @@ def main():
 					users[userid] = [req]
 					
 			i += 1
+	parse_time = time.time() - start_time
+	start_time = time.time()
+	print(f'done parsing file. took {parse_time:.4f} seconds')
 			
 	for user in users:
 		t = threading.Thread(target=thread_function, args=(user,))
@@ -133,9 +138,11 @@ def main():
 	for t in threads:
 		t.join()
 		
-	print('finished all threads')
-	for user in req_count:
-		print(req_count[user])
+	thread_time = time.time() - start_time
+	print(f'finished all threads in {thread_time:.4f} seconds')
+	# workload 10: 10 threads, 1 of each server: 247.4s
+	# changed to requests.Session() -> 209s
+	# changed to 10 of each server: 258s
 
 
 
