@@ -25,7 +25,7 @@ def activate_monitoring():
 			#bring BUY_LIST into env, check all stocks (the sharing of the resource means it must be async)
 			else:
 				buy_list_s = cache.get("BUY_LIST")
-				print(buy_list_s)
+				print(buy_list_s, flush=True)
 			
 			time.sleep(3)
 
