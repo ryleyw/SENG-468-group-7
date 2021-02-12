@@ -6,7 +6,10 @@ import random
 import sys
 import socket
 
-fake_quote_server = True
+fake_quote_server = False
+
+# to print to console, use:
+#print('string here', file=sys.stderr)
 
 # i am currently using 0 and 1 instead of true and false so that there are no
 # misscomunications between mongodb, python, and js
@@ -17,9 +20,6 @@ app = Flask(__name__)
 client = MongoClient('mongodb://mongos0:27017')
 stocks_db = client.stocks
 users = stocks_db.users
-if (not fake_quote_server):
-	skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	skt.connect(('quoteserver.seng.uvic.ca', 4444))
 
 @app.route('/', methods=['GET', 'POST'])
 def handle_commands():
@@ -28,8 +28,6 @@ def handle_commands():
 		
 	elif (request.method == 'POST'):
 		# all of the potential parameters
-		# to print to console, use:
-		#print('string here', file=sys.stderr)
 		data = request.json
 		
 		command = data['command'].lower()
@@ -110,13 +108,19 @@ def get_quote(userid, stock):
 		example_str = str(random_price) + ',' + stock + ',' + userid + ',1612739531162,fakequoteY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
 		result = example_str.encode()
 	else:
+		skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		skt.connect(('192.168.4.2', 4444)) # only works right now if you make a new socket each time
 		msg = f'{stock},{userid}\n'
+		print(f'msg: {msg}', file=sys.stderr)
 		skt.send(msg.encode())
 		try:
 			result = skt.recv(1024)
 		except:
 			print('Quote server error')
 			return (None, 'Error communicating with quote server')
+		skt.close()
+	
+	print(f'response: {result}', file=sys.stderr)
 	
 	result_str = result.decode('utf-8')
 	quote = result_str.split(',')
