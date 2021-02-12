@@ -142,7 +142,7 @@ def main():
 	print(f'finished all threads in {thread_time:.4f} seconds')
 	# workload 10: 10 threads, 1 of each server: 247.4s
 	# changed to requests.Session() -> 209s
-	# changed to 10 of each server: 258s
+	# changed to 10 of each server: 240s
 
 
 
