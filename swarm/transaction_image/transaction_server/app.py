@@ -297,7 +297,6 @@ def get_quote(userid, stock):
 			skt.send(msg.encode())
 			try:
 				result = skt.recv(1024)
-				timestamp = round(time.time() * 1000)
 			except:
 				print('Quote server error')
 				return (None, 'Error communicating with quote server')
@@ -319,6 +318,7 @@ def get_quote(userid, stock):
 		newQuote = create_quote(data['stock'], data['price'], data['userid'], data['timestamp'], data['hash'])
 		quotes.replace_one({'stock': data['stock']}, newQuote, True)
 	
+	timestamp = round(time.time() * 1000)
 	logType = 'QuoteServerType'
 	logfile += log_data(data,timestamp,logType)
 
