@@ -134,7 +134,7 @@ services:
             placement:
                 preferences:
                     - spread: node.labels.router
-        command: /bin/bash -c "cd /usr/src/web_app && npm install -y && npm start"
+        command: /bin/bash -c "cd /usr/src/web_app && npm start"
         networks:
             - "cluster_net"
         ports:
