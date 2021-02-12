@@ -153,6 +153,19 @@ services:
         ports:
             - "81:5000"        
             
+    # python flask transaction_server
+    monitor_server:
+        hostname: monitor_server
+        container_name: monitor_server
+        image: monitor_server:latest
+        deploy:
+            replicas: 1
+        command: /bin/bash -c "cd /usr/src/monitor_server && python app.py"
+        networks:
+            - "cluster_net"
+        ports:
+            - "82:5000"   
+            
     # express/react transaction_server
     #transaction_server:
     #    hostname: transaction_server
