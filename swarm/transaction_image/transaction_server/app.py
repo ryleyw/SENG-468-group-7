@@ -6,6 +6,8 @@ import random
 import sys
 import socket
 
+fake_quote_server = True
+
 # i am currently using 0 and 1 instead of true and false so that there are no
 # misscomunications between mongodb, python, and js
 # however it's plausible that boolean values would require less space (int might be 32 or even 64 bit, whereas bool could be 8 bit)
@@ -15,8 +17,9 @@ app = Flask(__name__)
 client = MongoClient('mongodb://mongos0:27017')
 stocks_db = client.stocks
 users = stocks_db.users
-skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-skt.connect(('quoteserver.seng.uvic.ca', 4444))
+if (not fake_quote_server):
+	skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	skt.connect(('quoteserver.seng.uvic.ca', 4444))
 
 @app.route('/', methods=['GET', 'POST'])
 def handle_commands():
@@ -101,19 +104,19 @@ def get_quote(userid, stock):
 	
 	# generate a fake quoteserver response (the hash and timestamp will always be the same, but shouldnt matter for development)
 	#rounded_number = round(random.uniform(greaterThan, lessThan), digits)
-	'''
-	random_price = round(random.uniform(0.25, 20.00), 2)
-	example_str = str(random_price) + ',' + stock + ',' + userid + ',1612739531162,xAnC1CbuaY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
-	result = example_str.encode()
-	'''
 	
-	msg = f'{stock},{userid}\n'
-	skt.send(msg.encode())
-	try:
-		result = skt.recv(1024)
-	except:
-		print('Quote server error')
-		return (None, 'Error communicating with quote server')
+	if (fake_quote_server):
+		random_price = round(random.uniform(0.25, 20.00), 2)
+		example_str = str(random_price) + ',' + stock + ',' + userid + ',1612739531162,fakequoteY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
+		result = example_str.encode()
+	else:
+		msg = f'{stock},{userid}\n'
+		skt.send(msg.encode())
+		try:
+			result = skt.recv(1024)
+		except:
+			print('Quote server error')
+			return (None, 'Error communicating with quote server')
 	
 	result_str = result.decode('utf-8')
 	quote = result_str.split(',')

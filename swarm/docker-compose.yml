@@ -147,7 +147,7 @@ services:
         image: transaction_server:latest
         deploy:
             replicas: 1
-        command: /bin/bash -c "cd /usr/src/transaction_server && pip install -r requirements.txt && python app.py"
+        command: /bin/bash -c "cd /usr/src/transaction_server && python app.py"
         networks:
             - "cluster_net"
         ports:
