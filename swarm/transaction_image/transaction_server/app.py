@@ -808,16 +808,18 @@ def handle_cancel_set_sell(userid, stock):
 			'message': 'User does not currently have a pending sell for this stock so nothing happened.',
 			'result': foundUser
 		}
-		
-	if (stock not in foundUser['stocks']):
-		# stock no longer exists in their account so we need to create it again
-		foundUser['stocks'][stock] = {
-			'units': foundUser['sell_triggers'][stock]['units'],
-			'cost': foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']
-		}
-	else:
-		foundUser['stocks'][stock]['units'] += foundUser['sell_triggers'][stock]['units']
-		foundUser['stocks'][stock]['cost'] += foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']
+	
+	if (foundUser['sell_triggers'][stock]['active'] == 1):
+		# sell trigger is active so we need to add the stock units back to the user's account
+		if (stock not in foundUser['stocks']):
+			# stock no longer exists in their account so we need to create it again
+			foundUser['stocks'][stock] = {
+				'units': foundUser['sell_triggers'][stock]['units'],
+				'cost': foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']
+			}
+		else:
+			foundUser['stocks'][stock]['units'] += foundUser['sell_triggers'][stock]['units']
+			foundUser['stocks'][stock]['cost'] += foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']
 	
 	del foundUser['sell_triggers'][stock]
 	
