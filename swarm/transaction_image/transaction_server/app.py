@@ -672,6 +672,15 @@ def handle_cancel_set_buy(userid, stock):
 	result = update_user_in_db(foundUser)
 	
 	if (result['success'] == 1):
+
+		monitor_url = 'http://monitor_server:5000/cancelBuy'
+		payload = {
+			'stock': stock,
+			'userid': userid
+			}
+		s = requests.Session()
+		s.post(monitor_url, json = payload)
+				
 		return {
 			'success': 1,
 			'message': f'Set buy trigger cancelled and money has been added back to the user\'s account.',
@@ -846,6 +855,15 @@ def handle_cancel_set_sell(userid, stock):
 	result = update_user_in_db(foundUser)
 	
 	if (result['success'] == 1):
+		
+		monitor_url = 'http://monitor_server:5000/cancelSell'
+		payload = {
+			'stock': stock,
+			'userid': userid
+			}
+		s = requests.Session()
+		s.post(monitor_url, json = payload)
+
 		return {
 			'success': 1,
 			'message': f'Set sell trigger cancelled and stock units have been added back to the user\'s account.',
