@@ -6,6 +6,11 @@ import random
 import sys
 import socket
 
+fake_quote_server = False
+
+# to print to console, use:
+#print('string here', file=sys.stderr)
+
 # i am currently using 0 and 1 instead of true and false so that there are no
 # misscomunications between mongodb, python, and js
 # however it's plausible that boolean values would require less space (int might be 32 or even 64 bit, whereas bool could be 8 bit)
@@ -15,8 +20,6 @@ app = Flask(__name__)
 client = MongoClient('mongodb://mongos0:27017')
 stocks_db = client.stocks
 users = stocks_db.users
-skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-skt.connect(('quoteserver.seng.uvic.ca', 4444))
 
 @app.route('/', methods=['GET', 'POST'])
 def handle_commands():
@@ -25,8 +28,6 @@ def handle_commands():
 		
 	elif (request.method == 'POST'):
 		# all of the potential parameters
-		# to print to console, use:
-		#print('string here', file=sys.stderr)
 		data = request.json
 		
 		command = data['command'].lower()
@@ -101,19 +102,25 @@ def get_quote(userid, stock):
 	
 	# generate a fake quoteserver response (the hash and timestamp will always be the same, but shouldnt matter for development)
 	#rounded_number = round(random.uniform(greaterThan, lessThan), digits)
-	'''
-	random_price = round(random.uniform(0.25, 20.00), 2)
-	example_str = str(random_price) + ',' + stock + ',' + userid + ',1612739531162,xAnC1CbuaY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
-	result = example_str.encode()
-	'''
 	
-	msg = f'{stock},{userid}\n'
-	skt.send(msg.encode())
-	try:
-		result = skt.recv(1024)
-	except:
-		print('Quote server error')
-		return (None, 'Error communicating with quote server')
+	if (fake_quote_server):
+		random_price = round(random.uniform(0.25, 20.00), 2)
+		example_str = str(random_price) + ',' + stock + ',' + userid + ',1612739531162,fakequoteY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
+		result = example_str.encode()
+	else:
+		skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		skt.connect(('192.168.4.2', 4444)) # only works right now if you make a new socket each time
+		msg = f'{stock},{userid}\n'
+		print(f'msg: {msg}', file=sys.stderr)
+		skt.send(msg.encode())
+		try:
+			result = skt.recv(1024)
+		except:
+			print('Quote server error')
+			return (None, 'Error communicating with quote server')
+		skt.close()
+	
+	print(f'response: {result}', file=sys.stderr)
 	
 	result_str = result.decode('utf-8')
 	quote = result_str.split(',')
@@ -801,16 +808,18 @@ def handle_cancel_set_sell(userid, stock):
 			'message': 'User does not currently have a pending sell for this stock so nothing happened.',
 			'result': foundUser
 		}
-		
-	if (stock not in foundUser['stocks']):
-		# stock no longer exists in their account so we need to create it again
-		foundUser['stocks'][stock] = {
-			'units': foundUser['sell_triggers'][stock]['units'],
-			'cost': foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']
-		}
-	else:
-		foundUser['stocks'][stock]['units'] += foundUser['sell_triggers'][stock]['units']
-		foundUser['stocks'][stock]['cost'] += foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']
+	
+	if (foundUser['sell_triggers'][stock]['active'] == 1):
+		# sell trigger is active so we need to add the stock units back to the user's account
+		if (stock not in foundUser['stocks']):
+			# stock no longer exists in their account so we need to create it again
+			foundUser['stocks'][stock] = {
+				'units': foundUser['sell_triggers'][stock]['units'],
+				'cost': foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']
+			}
+		else:
+			foundUser['stocks'][stock]['units'] += foundUser['sell_triggers'][stock]['units']
+			foundUser['stocks'][stock]['cost'] += foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']
 	
 	del foundUser['sell_triggers'][stock]
 	

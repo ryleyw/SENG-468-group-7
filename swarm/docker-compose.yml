@@ -134,7 +134,7 @@ services:
             placement:
                 preferences:
                     - spread: node.labels.router
-        command: /bin/bash -c "cd /usr/src/web_app && npm install -y && npm start"
+        command: /bin/bash -c "cd /usr/src/web_app && npm start"
         networks:
             - "cluster_net"
         ports:
@@ -147,11 +147,24 @@ services:
         image: transaction_server:latest
         deploy:
             replicas: 1
-        command: /bin/bash -c "cd /usr/src/transaction_server && pip install -r requirements.txt && python app.py"
+        command: /bin/bash -c "cd /usr/src/transaction_server && python app.py"
         networks:
             - "cluster_net"
         ports:
             - "81:5000"        
+            
+    # python flask monitor_server
+    monitor_server:
+        hostname: monitor_server
+        container_name: monitor_server
+        image: monitor_server:latest
+        deploy:
+            replicas: 1
+        command: /bin/bash -c "cd /usr/src/monitor_server && python app.py"
+        networks:
+            - "cluster_net"
+        ports:
+            - "82:5000"   
             
     # express/react transaction_server
     #transaction_server:
