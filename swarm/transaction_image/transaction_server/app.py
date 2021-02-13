@@ -2,6 +2,7 @@ from flask import Flask
 from flask import request
 from pymongo import MongoClient
 import time
+import requests
 import random
 import sys
 import socket
@@ -625,7 +626,16 @@ def handle_set_buy_trigger(userid, stock, amount):
 	result = update_user_in_db(foundUser)
 	
 	if (result['success'] == 1):
-		return {
+                monitor_url = 'http://monitor_server:5000/addToBuyList'
+                payload = {
+                        'stock':stock,
+                        'userid':userid,
+                        'trigger':amount
+                        }
+                s = requests.Session()
+                s.post(monitor_url, json = payload)
+                
+                return {
 			'success': 1,
 			'message': f'Set buy trigger confirmed.',
 			'result': result['user']
@@ -778,6 +788,16 @@ def handle_set_sell_trigger(userid, stock, amount):
 	result = update_user_in_db(foundUser)
 	
 	if (result['success'] == 1):
+		print("ATTEMPTING TO ADD TO MONITOR SERVER SELL LIST", flush=True)
+		monitor_url = 'http://monitor_server:5000/addToSellList'
+		payload = {
+                	'stock':stock,
+                	'userid':userid,
+                	'trigger':amount
+			}
+		s = requests.Session()
+		s.post(monitor_url, json = payload)
+
 		return {
 			'success': 1,
 			'message': f'Set sell trigger confirmed.',
