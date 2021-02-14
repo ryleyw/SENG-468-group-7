@@ -22,12 +22,19 @@ client = MongoClient('mongodb://mongos0:27017')
 stocks_db = client.stocks
 users = stocks_db.users
 
+transactionNum = 0
+logfile = '<?xml version=\"1.0\"?>\n<log>\n'
+
 @app.route('/', methods=['GET', 'POST'])
 def handle_commands():
 	if (request.method == 'GET'):
 		return 'This is the transaction server (running on python with flask).\n'
 		
 	elif (request.method == 'POST'):
+		global logfile
+		global transactionNum
+		timestamp = round(time.time() * 1000)
+		transactionNum += 1
 		# all of the potential parameters
 		data = request.json
 		
@@ -39,51 +46,164 @@ def handle_commands():
 		if ('filename' in data): filename = data['filename']
 		
 		if (command == 'add'):
+			logInput = {
+				'command': command,
+				'userid': userid,
+				'amount': amount
+			}
+			logType = 'UserCommandType_2'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_add(userid, amount)
 			
 		if (command == 'quote'):
+			logInput = {
+				'command': command,
+				'userid': userid,
+				'stock': stock
+			}
+			logType = 'UserCommandType_3'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_quote(userid, stock)
 		
 		if (command == 'buy'):
+			logInput = {
+				'command': command,
+				'userid': userid,
+				'stock': stock,
+				'amount': amount
+			}
+			logType = 'UserCommandType_4'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_buy(userid, stock, amount)
 			
 		if (command == 'commit_buy'):
+			logInput = {
+				'command': command,
+				'userid': userid
+			}
+			logType = 'UserCommandType_1'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_commit_buy(userid)
 			
 		if (command == 'cancel_buy'):
+			logInput = {
+				'command': command,
+				'userid': userid
+			}
+			logType = 'UserCommandType_1'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_cancel_buy(userid)
 			
 		if (command == 'sell'):
+			logInput = {
+				'command': command,
+				'userid': userid,
+				'stock': stock,
+				'amount': amount
+			}
+			logType = 'UserCommandType_4'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_sell(userid, stock, amount)
 			
 		if (command == 'commit_sell'):
+			logInput = {
+				'command': command,
+				'userid': userid
+			}
+			logType = 'UserCommandType_1'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_commit_sell(userid)
 			
 		if (command == 'cancel_sell'):
+			logInput = {
+				'command': command,
+				'userid': userid
+			}
+			logType = 'UserCommandType_1'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_cancel_sell(userid)
 			
 		if (command == 'set_buy_amount'):
+			logInput = {
+				'command': command,
+				'userid': userid,
+				'stock': stock,
+				'amount': amount
+			}
+			logType = 'UserCommandType_4'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_set_buy_amount(userid, stock, amount)
 			
 		if (command == 'set_buy_trigger'):
+			logInput = {
+				'command': command,
+				'userid': userid,
+				'stock': stock,
+				'amount': amount
+			}
+			logType = 'UserCommandType_4'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_set_buy_trigger(userid, stock, amount)
 			
 		if (command == 'cancel_set_buy'):
+			logInput = {
+				'command': command,
+				'userid': userid,
+				'stock': stock
+			}
+			logType = 'UserCommandType_3'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_cancel_set_buy(userid, stock)
 			
 		if (command == 'set_sell_amount'):
+			logInput = {
+				'command': command,
+				'userid': userid,
+				'stock': stock,
+				'amount': amount
+			}
+			logType = 'UserCommandType_4'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_set_sell_amount(userid, stock, amount)
 			
 		if (command == 'set_sell_trigger'):
+			logInput = {
+				'command': command,
+				'userid': userid,
+				'stock': stock,
+				'amount': amount
+			}
+			logType = 'UserCommandType_4'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_set_sell_trigger(userid, stock, amount)
 			
 		if (command == 'cancel_set_sell'):
+			logInput = {
+				'command': command,
+				'userid': userid,
+				'stock': stock
+			}
+			logType = 'UserCommandType_3'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_cancel_set_sell(userid, stock)
 			
 		if (command == 'display_summary'):
+			logInput = {
+				'command': command,
+				'userid': userid
+			}
+			logType = 'UserCommandType_1'
+			logfile += log_data(logInput,timestamp,logType)
 			return handle_display_summary(userid)
 			
-		# haven't implemented "dumplog" command
+		if (command == 'dumplog'):
+			logInput = {
+				'command': command,
+				'filename': filename
+			}
+			logType = 'UserCommandType_0'
+			logfile += log_data(logInput,timestamp,logType)
+			return handle_dumplog()
 		
 		return { 
 			'success': 0, 
@@ -104,6 +224,8 @@ def get_quote(userid, stock):
 	# generate a fake quoteserver response (the hash and timestamp will always be the same, but shouldnt matter for development)
 	#rounded_number = round(random.uniform(greaterThan, lessThan), digits)
 	
+	global logfile
+
 	if (fake_quote_server):
 		random_price = round(random.uniform(0.25, 20.00), 2)
 		example_str = str(random_price) + ',' + stock + ',' + userid + ',1612739531162,fakequoteY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
@@ -116,6 +238,7 @@ def get_quote(userid, stock):
 		skt.send(msg.encode())
 		try:
 			result = skt.recv(1024)
+			timestamp = round(time.time() * 1000)
 		except:
 			print('Quote server error')
 			return (None, 'Error communicating with quote server')
@@ -134,6 +257,9 @@ def get_quote(userid, stock):
 		'hash': quote[4]
 	}
 	
+	logType = 'QuoteServerType'
+	logfile += log_data(data,timestamp,logType)
+
 	return (data, None)
 	
 def update_user_in_db(user):
@@ -160,6 +286,8 @@ def get_user_from_db(userid):
 	return foundUser
 		
 def handle_add(userid, amount):
+	global logfile
+
 	foundUser = get_user_from_db(userid)
 	
 	if (foundUser == None):
@@ -168,8 +296,17 @@ def handle_add(userid, amount):
 	foundUser['cash'] += float(amount)
 	
 	result = update_user_in_db(foundUser)
+
+	timestamp = round(time.time() * 1000)
 	
 	if (result['success'] == 1):
+		logInput = {
+			'action': 'add',
+			'userid': userid,
+			'amount': amount
+		}
+		logType = 'AccountTransactionType'
+		logfile += log_data(logInput,timestamp,logType)
 		return {
 			'success': 1, 
 			'message': 'Successfully added money to the account.',
@@ -200,6 +337,8 @@ def handle_quote(userid, stock):
 	}
 
 def handle_buy(userid, stock, amount):
+	global logfile
+
 	foundUser = get_user_from_db(userid)
 	
 	if (foundUser == None):
@@ -247,8 +386,17 @@ def handle_buy(userid, stock, amount):
 	}
 	
 	result = update_user_in_db(foundUser)
+
+	timestamp = round(time.time() * 1000)
 	
 	if (result['success'] == 1):
+		logInput = {
+			'action': 'remove',
+			'userid': userid,
+			'amount': amount
+		}
+		logType = 'AccountTransactionType'
+		logfile += log_data(logInput,timestamp,logType)
 		return {
 			'success': 1,
 			'message': f'You will purchase {rounded_stock_number} units of {stock} at ${quote["price"]} per unit for a total of ${buy_price}. Please confirm.',
@@ -364,6 +512,7 @@ def handle_cancel_buy(userid):
 	}
 
 def handle_sell(userid, stock, amount):
+	global logfile
 	foundUser = get_user_from_db(userid)
 	
 	if (foundUser == None):
@@ -414,8 +563,17 @@ def handle_sell(userid, stock, amount):
 	}
 	
 	result = update_user_in_db(foundUser)
-	
+
+	timestamp = round(time.time() * 1000)
+
 	if (result['success'] == 1):
+		logInput = {
+			'action': 'add',
+			'userid': userid,
+			'amount': sell_price
+		}
+		logType = 'AccountTransactionType'
+		logfile += log_data(logInput,timestamp,logType)
 		return {
 			'success': 1,
 			'message': f'You will sell {rounded_stock_number} units of {stock} at ${quote["price"]} per unit for a total of ${sell_price}. Please confirm.',
@@ -879,7 +1037,139 @@ def handle_cancel_set_sell(userid, stock):
 
 def handle_display_summary(userid):
 	return {'success': 1, 'message': 'This is the display_summary command.'}
-	
+
+def handle_dumplog():
+	global logfile
+	global transactionNum
+	logs = logfile + '</log>\n'
+	transactionNum = 0
+	logfile = '<?xml version=\"1.0\"?>\n<log>\n'
+	return {
+		'success': 1, 
+		'message': 'This is the dumplog command.',
+		'result': logs
+	}
+
+def log_data(data, timestamp, logType):
+	global transactionNum
+	if (logType == 'QuoteServerType'):
+		server = 'QSRV'
+		return ("\t<quoteServer>\n"
+			"\t\t<timestamp>{}</timestamp>\n"
+			"\t\t<server>{}</server>\n"
+			"\t\t<transactionNum>{}</transactionNum>\n"
+			"\t\t<quoteServerTime>{}</quoteServerTime>\n"
+			"\t\t<username>{}</username>\n"
+			"\t\t<stockSymbol>{}</stockSymbol>\n"
+			"\t\t<price>{}</price>\n"
+			"\t\t<cryptokey>{}</cryptokey>\n"
+			"\t</quoteServer>\n"
+			.format(timestamp,
+			server,
+			transactionNum,
+			data['timestamp'],
+			data['userid'],
+			data['stock'].upper(),
+			"{:.2f}".format(data['price']),
+			data['hash'].rstrip()))
+	elif (logType == 'UserCommandType_0'):
+		server = 'CLI'
+		return ("\t<userCommand>\n"
+			"\t\t<timestamp>{}</timestamp>\n"
+			"\t\t<server>{}</server>\n"
+			"\t\t<transactionNum>{}</transactionNum>\n"
+			"\t\t<command>{}</command>\n"
+			"\t\t<filename>{}</filename>\n"
+			"\t</userCommand>\n"
+			.format(timestamp,
+			server,
+			transactionNum,
+			data['command'].upper(),
+			data['filename']))
+	elif (logType == 'UserCommandType_1'):
+		server = 'CLI'
+		return ("\t<userCommand>\n"
+			"\t\t<timestamp>{}</timestamp>\n"
+			"\t\t<server>{}</server>\n"
+			"\t\t<transactionNum>{}</transactionNum>\n"
+			"\t\t<command>{}</command>\n"
+			"\t\t<username>{}</username>\n"
+			"\t</userCommand>\n"
+			.format(timestamp,
+			server,
+			transactionNum,
+			data['command'].upper(),
+			data['userid']))
+	elif (logType == 'UserCommandType_2'):
+		server = 'CLI'
+		return ("\t<userCommand>\n"
+			"\t\t<timestamp>{}</timestamp>\n"
+			"\t\t<server>{}</server>\n"
+			"\t\t<transactionNum>{}</transactionNum>\n"
+			"\t\t<command>{}</command>\n"
+			"\t\t<username>{}</username>\n"
+			"\t\t<funds>{}</funds>\n"
+			"\t</userCommand>\n"
+			.format(timestamp,
+			server,
+			transactionNum,
+			data['command'].upper(),
+			data['userid'],
+			"{:.2f}".format(data['amount'])))
+	elif (logType == 'UserCommandType_3'):
+		server = 'CLI'
+		return ("\t<userCommand>\n"
+			"\t\t<timestamp>{}</timestamp>\n"
+			"\t\t<server>{}</server>\n"
+			"\t\t<transactionNum>{}</transactionNum>\n"
+			"\t\t<command>{}</command>\n"
+			"\t\t<username>{}</username>\n"
+			"\t\t<stockSymbol>{}</stockSymbol>\n"
+			"\t</userCommand>\n"
+			.format(timestamp,
+			server,
+			transactionNum,
+			data['command'].upper(),
+			data['userid'],
+			data['stock'].upper()))
+	elif (logType == 'UserCommandType_4'):
+		server = 'CLI'
+		return ("\t<userCommand>\n"
+			"\t\t<timestamp>{}</timestamp>\n"
+			"\t\t<server>{}</server>\n"
+			"\t\t<transactionNum>{}</transactionNum>\n"
+			"\t\t<command>{}</command>\n"
+			"\t\t<username>{}</username>\n"
+			"\t\t<stockSymbol>{}</stockSymbol>\n"
+			"\t\t<funds>{}</funds>\n"
+			"\t</userCommand>\n"
+			.format(timestamp,
+			server,
+			transactionNum,
+			data['command'].upper(),
+			data['userid'],
+			data['stock'].upper(),
+			"{:.2f}".format(data['amount'])))
+	elif (logType == 'AccountTransactionType'):
+		server = 'TSRV'
+		return ("\t<accountTransaction>\n"
+			"\t\t<timestamp>{}</timestamp>\n"
+			"\t\t<server>{}</server>\n"
+			"\t\t<transactionNum>{}</transactionNum>\n"
+			"\t\t<action>{}</action>\n"
+			"\t\t<username>{}</username>\n"
+			"\t\t<funds>{}</funds>\n"
+			"\t</accountTransaction>\n"
+			.format(timestamp,
+			server,
+			transactionNum,
+			data['action'],
+			data['userid'],
+			"{:.2f}".format(data['amount'])))
+	elif (logType == 'SystemEventType'):
+		#to-do
+	elif (logType == 'ErrorEventType'):
+		#to-do
 	
 def create_user(userid):
 	'''
