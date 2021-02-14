@@ -44,6 +44,7 @@ def handle_commands():
 		if ('amount' in data): amount = float(data['amount'])
 		if ('stock' in data): stock = data['stock']
 		if ('filename' in data): filename = data['filename']
+		if ('unit_price' in data): unit_price = data['unit_price']
 		
 		if (command == 'add'):
 			logInput = {
@@ -204,6 +205,14 @@ def handle_commands():
 			logType = 'UserCommandType_0'
 			logfile += log_data(logInput,timestamp,logType)
 			return handle_dumplog()
+		
+		if (command == 'execute_buy_trigger'):
+			# need to add logging code @ lyon
+			return handle_execute_buy_trigger(userid, stock, unit_price)
+			
+		if (command == 'execute_sell_trigger'):
+			# need to add logging code @ lyon
+			return handle_execute_sell_trigger(userid, stock, unit_price)
 		
 		return { 
 			'success': 0, 
@@ -1049,6 +1058,126 @@ def handle_dumplog():
 		'message': 'This is the dumplog command.',
 		'result': logs
 	}
+	
+def handle_execute_buy_trigger(userid, stock, unit_price):
+	# this function is called when the monitor server detects a stock price is 
+	# within a trigger limit so we can now execute that trigger at the given price
+	foundUser = get_user_from_db(userid)
+	
+	if (foundUser == None):
+		return {
+			'success': 0,
+			'message': 'User has not added any money to their account yet.',
+			'error': 'User does not exist in DB.'
+		}
+		
+	if (foundUser['buy_triggers'][stock] == None):
+		return {
+			'success': 0,
+			'message': 'Trigger execution unsuccessful. User does not have a buy trigger for this stock.',
+			'result': foundUser,
+			'error': 'User does not have a buy trigger for this stock.'
+		}
+		
+	if (foundUser['buy_triggers'][stock]['active'] == 0):
+		return {
+			'success': 0,
+			'message': 'Trigger execution unsuccessful. User\'s buy trigger for this stock is not currently active.',
+			'result': foundUser,
+			'error': 'Buy trigger inactive.'
+		}
+		
+	num_units = int(foundUser['buy_triggers'][stock]['total_cash'] / unit_price)
+	cost = round(num_units * unit_price, 2)
+	leftover_cash = foundUser['buy_triggers'][stock]['total_cash'] - cost
+	
+	# add the leftover_cash back to the user's account,
+	# add num_units of stock to the user's account,
+	# remove the buy trigger from the user's account
+	
+	foundUser['cash'] += leftover_cash
+	foundUser['cash'] = round(foundUser['cash'], 2)
+		
+	if stock in foundUser['stocks']:
+		# user already has this stock so we just add the values together
+		foundUser['stocks'][stock]['units'] += num_units
+		foundUser['stocks'][stock]['cost'] += cost
+		foundUser['stocks'][stock]['cost'] = round(foundUser['stocks'][stock]['cost'], 2)
+	else:
+		# stock doesn't exist yet so we add a new entry
+		foundUser['stocks'][stock] = {
+			'units': num_units,
+			'cost': cost
+		}
+		
+	del foundUser['buy_triggers'][stock]
+	
+	result = update_user_in_db(foundUser)
+	
+	if (result['success'] == 1):
+		return {
+			'success': 1,
+			'message': f'Buy trigger executed.',
+			'result': { 'userid': userid, 'stock': stock }
+		}
+	
+	return {
+		'success': 0,
+		'message': 'Database write was unsuccessful',
+		'result': { 'userid': userid, 'stock': stock },
+		'error': result['error']
+	}
+	
+def handle_execute_sell_trigger(userid, stock, unit_price):
+	# this function is called when the monitor server detects a stock price is 
+	# within a trigger limit so we can now execute that trigger at the given price
+	foundUser = get_user_from_db(userid)
+	
+	if (foundUser == None):
+		return {
+			'success': 0,
+			'message': 'User has not added any money to their account yet.',
+			'error': 'User does not exist in DB.'
+		}
+		
+	if (foundUser['sell_triggers'][stock] == None):
+		return {
+			'success': 0,
+			'message': 'Commit unsuccessful. User does not have a sell trigger for this stock.',
+			'result': foundUser,
+			'error': 'User does not have a sell trigger for this stock.'
+		}
+	
+	# calculate how much cash the user will get from the sale
+	# add the cash to the user's account
+	# delete the stock from their sell triggers
+	
+	total_price = foundUser['sell_triggers'][stock]['units'] * unit_price
+	estimated_price = foundUser['sell_triggers'][stock]['unit_price'] * foundUser['sell_triggers'][stock]['units']
+	
+	foundUser['cash'] += total_price
+		
+	if stock in foundUser['stocks']:
+		# user still has some of this stock so we can subtract the difference of the sale to the cost
+		foundUser['stocks'][stock]['cost'] -= total_price - estimated_price
+		
+	del foundUser['sell_triggers'][stock]
+	
+	result = update_user_in_db(foundUser)
+	
+	if (result['success'] == 1):
+		return {
+			'success': 1,
+			'message': f'Sell trigger executed.',
+			'result': { 'userid': userid, 'stock': stock }
+		}
+	
+	return {
+		'success': 0,
+		'message': 'Database write was unsuccessful',
+		'result': { 'userid': userid, 'stock': stock },
+		'error': result['error']
+	}
 
 def log_data(data, timestamp, logType):
 	global transactionNum
@@ -1166,9 +1295,9 @@ def log_data(data, timestamp, logType):
 			data['action'],
 			data['userid'],
 			"{:.2f}".format(data['amount'])))
-	elif (logType == 'SystemEventType'):
+	#elif (logType == 'SystemEventType'):
 		#to-do
-	elif (logType == 'ErrorEventType'):
+	#elif (logType == 'ErrorEventType'):
 		#to-do
 	
 def create_user(userid):
