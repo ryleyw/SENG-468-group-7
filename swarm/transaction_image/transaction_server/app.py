@@ -1070,7 +1070,13 @@ def handle_execute_buy_trigger(userid, stock, unit_price):
 			'message': 'User has not added any money to their account yet.',
 			'error': 'User does not exist in DB.'
 		}
-		
+	if (stock not in foundUser['buy_triggers']):
+		return {
+			'success': 0,
+			'message': 'Trigger execution unsuccessful. User does not have a buy trigger for this stock.',
+			'result': foundUser,
+			'error': 'User does not have a buy trigger for this stock.'
+		}	
 	if (foundUser['buy_triggers'][stock] == None):
 		return {
 			'success': 0,
@@ -1139,7 +1145,13 @@ def handle_execute_sell_trigger(userid, stock, unit_price):
 			'message': 'User has not added any money to their account yet.',
 			'error': 'User does not exist in DB.'
 		}
-		
+	if (stock not in foundUser['sell_triggers']):
+		return {
+			'success': 0,
+			'message': 'Trigger execution unsuccessful. User does not have a buy trigger for this stock.',
+			'result': foundUser,
+			'error': 'User does not have a sell trigger for this stock.'
+		}	
 	if (foundUser['sell_triggers'][stock] == None):
 		return {
 			'success': 0,
