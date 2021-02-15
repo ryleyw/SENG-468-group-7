@@ -31,7 +31,10 @@ def main():
 		for line in infile:
 			words = re.split(',|\s', line)
 			if (words[1] == 'DUMPLOG'):
-				print('dumplog')
+				logreq = {
+					'command': words[1],
+					'filename': words[2]
+				}
 			else:
 				command = words[1]
 				userid = words[2]
@@ -137,7 +140,17 @@ def main():
 		
 	for t in threads:
 		t.join()
-		
+	
+	if (logreq):
+		response = requests.post(url, logreq)
+		obj = json.loads(response.text)
+		#if ('data' in obj):
+		#	if ('result' in obj['data']):
+		#		print(obj['data']['result'])
+		f = open(logreq['filename'] + '.xml',"w")
+		f.write(obj['data']['result'])
+		f.close()
+	
 	thread_time = time.time() - start_time
 	print(f'finished all threads in {thread_time:.4f} seconds')
 	# workload 10: 10 threads, 1 of each server: 247.4s
