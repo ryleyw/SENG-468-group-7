@@ -34,7 +34,6 @@ def handle_commands():
 		global logfile
 		global transactionNum
 		timestamp = round(time.time() * 1000)
-		transactionNum += 1
 		# all of the potential parameters
 		data = request.json
 		
@@ -47,6 +46,7 @@ def handle_commands():
 		if ('unit_price' in data): unit_price = data['unit_price']
 		
 		if (command == 'add'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -57,6 +57,7 @@ def handle_commands():
 			return handle_add(userid, amount)
 			
 		if (command == 'quote'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -67,6 +68,7 @@ def handle_commands():
 			return handle_quote(userid, stock)
 		
 		if (command == 'buy'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -78,6 +80,7 @@ def handle_commands():
 			return handle_buy(userid, stock, amount)
 			
 		if (command == 'commit_buy'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid
@@ -87,6 +90,7 @@ def handle_commands():
 			return handle_commit_buy(userid)
 			
 		if (command == 'cancel_buy'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid
@@ -96,6 +100,7 @@ def handle_commands():
 			return handle_cancel_buy(userid)
 			
 		if (command == 'sell'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -107,6 +112,7 @@ def handle_commands():
 			return handle_sell(userid, stock, amount)
 			
 		if (command == 'commit_sell'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid
@@ -116,6 +122,7 @@ def handle_commands():
 			return handle_commit_sell(userid)
 			
 		if (command == 'cancel_sell'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid
@@ -125,6 +132,7 @@ def handle_commands():
 			return handle_cancel_sell(userid)
 			
 		if (command == 'set_buy_amount'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -136,6 +144,7 @@ def handle_commands():
 			return handle_set_buy_amount(userid, stock, amount)
 			
 		if (command == 'set_buy_trigger'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -147,6 +156,7 @@ def handle_commands():
 			return handle_set_buy_trigger(userid, stock, amount)
 			
 		if (command == 'cancel_set_buy'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -157,6 +167,7 @@ def handle_commands():
 			return handle_cancel_set_buy(userid, stock)
 			
 		if (command == 'set_sell_amount'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -168,6 +179,7 @@ def handle_commands():
 			return handle_set_sell_amount(userid, stock, amount)
 			
 		if (command == 'set_sell_trigger'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -179,6 +191,7 @@ def handle_commands():
 			return handle_set_sell_trigger(userid, stock, amount)
 			
 		if (command == 'cancel_set_sell'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -189,6 +202,7 @@ def handle_commands():
 			return handle_cancel_set_sell(userid, stock)
 			
 		if (command == 'display_summary'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid
@@ -198,6 +212,7 @@ def handle_commands():
 			return handle_display_summary(userid)
 			
 		if (command == 'dumplog'):
+			transactionNum += 1
 			logInput = {
 				'command': command,
 				'filename': filename
