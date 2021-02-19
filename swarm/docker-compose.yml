@@ -98,10 +98,7 @@ services:
         container_name: mongos0
         image: mongo
         deploy:
-            replicas: 3
-            placement:
-                preferences:
-                    - spread: node.labels.router
+            mode: global
         entrypoint: mongos
         command: "--bind_ip_all --port 27017 --configdb conf/confrs0:27017,confrs1:27017,confrs2:27017"
         networks:
@@ -130,10 +127,7 @@ services:
         container_name: web_app
         image: web_app:latest
         deploy:
-            replicas: 1
-            placement:
-                preferences:
-                    - spread: node.labels.router
+            mode: global
         command: /bin/bash -c "cd /usr/src/web_app && npm start"
         networks:
             - "cluster_net"
@@ -146,7 +140,7 @@ services:
         container_name: transaction_server
         image: transaction_server:latest
         deploy:
-            replicas: 1
+            mode: global
         command: /bin/bash -c "cd /usr/src/transaction_server && python app.py"
         networks:
             - "cluster_net"
