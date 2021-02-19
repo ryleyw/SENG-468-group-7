@@ -19,6 +19,16 @@ def print_response(text):
 
 url = 'http://localhost:80/api/command/' 	# docker swarm web app
 #url = 'http://localhost:81'					# docker swarm transaction server
+
+data = {
+    'command': 'get_info',
+}
+
+response = requests.post(url, json = data)
+
+print(response.text)
+
+'''
 data = {
     'command': 'AdD',
     'userid': 'basics',
@@ -199,4 +209,4 @@ data = {
 
 response = requests.post(url, data = data)
 
-print_response(response.text)
+print_response(response.text)'''

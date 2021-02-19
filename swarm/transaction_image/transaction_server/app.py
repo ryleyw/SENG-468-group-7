@@ -8,6 +8,9 @@ import sys
 import socket
 
 fake_quote_server = False
+cache_time_limit = 120 	# seconds before a cached stock quote becomes stale
+cached_count = 0
+total_count = 0
 
 # to print to console, use:
 #print('string here', file=sys.stderr)
@@ -21,6 +24,7 @@ app = Flask(__name__)
 client = MongoClient('mongodb://mongos0:27017')
 stocks_db = client.stocks
 users = stocks_db.users
+quotes = stocks_db.quotes
 
 transactionNum = 0
 logfile = '<?xml version=\"1.0\"?>\n<log>\n'
@@ -228,6 +232,12 @@ def handle_commands():
 		if (command == 'execute_sell_trigger'):
 			# need to add logging code @ lyon
 			return handle_execute_sell_trigger(userid, stock, unit_price)
+			
+		if (command == 'get_info'):
+			return {
+				'cached_count': cached_count,
+				'total_count': total_count
+			}
 		
 		return { 
 			'success': 0, 
@@ -245,41 +255,69 @@ def get_quote(userid, stock):
 	# example return from quoteserver:
 	# result = b'1.01,ABC,userid,1612739531162,xAnC1CbuaY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
 	
-	# generate a fake quoteserver response (the hash and timestamp will always be the same, but shouldnt matter for development)
-	#rounded_number = round(random.uniform(greaterThan, lessThan), digits)
-	
 	global logfile
+	global cached_count
+	global total_count
+	
+	found_fresh = False
+	total_count += 1
+	
+	# first we check the DB to see if we already have a cached value for this quote
+	foundQuote = quotes.find_one({'stock': stock})
+	if (foundQuote):
+		# check to see if it's stale
+		diff = time.time() - foundQuote['docker_timestamp']
+		if (diff < cache_time_limit):
+			# quote is fresh so we can use it
+			found_fresh = True
+			
+			data = {
+				'price': foundQuote['price'],
+				'stock': foundQuote['stock'],
+				'userid': foundQuote['userid'],
+				'timestamp': foundQuote['timestamp'],
+				'hash': foundQuote['hash']
+			}
+			cached_count += 1
+			
+			print(f'cached quote: {stock}', file=sys.stderr)
 
-	if (fake_quote_server):
-		random_price = round(random.uniform(0.25, 20.00), 2)
-		example_str = str(random_price) + ',' + stock + ',' + userid + ',1612739531162,fakequoteY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
-		result = example_str.encode()
-	else:
-		skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		skt.connect(('192.168.4.2', 4444)) # only works right now if you make a new socket each time
-		msg = f'{stock},{userid}\n'
-		print(f'msg: {msg}', file=sys.stderr)
-		skt.send(msg.encode())
-		try:
-			result = skt.recv(1024)
-			timestamp = round(time.time() * 1000)
-		except:
-			print('Quote server error')
-			return (None, 'Error communicating with quote server')
-		skt.close()
-	
-	print(f'response: {result}', file=sys.stderr)
-	
-	result_str = result.decode('utf-8')
-	quote = result_str.split(',')
-	
-	data = {
-		'price': float(quote[0]),
-		'stock': quote[1],
-		'userid': quote[2],
-		'timestamp': quote[3],
-		'hash': quote[4]
-	}
+	if (found_fresh == False):
+		if (fake_quote_server):
+			# generate a fake quoteserver response (the hash and timestamp will always be the same, but shouldnt matter for development)
+			# rounded_number = round(random.uniform(greaterThan, lessThan), digits)
+			random_price = round(random.uniform(0.25, 20.00), 2)
+			example_str = str(random_price) + ',' + stock + ',' + userid + ',1612739531162,fakequoteY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
+			result = example_str.encode()
+		else:
+			skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			skt.connect(('192.168.4.2', 4444)) # only works right now if you make a new socket each time
+			msg = f'{stock},{userid}\n'
+			print(f'msg: {msg}', file=sys.stderr)
+			skt.send(msg.encode())
+			try:
+				result = skt.recv(1024)
+				timestamp = round(time.time() * 1000)
+			except:
+				print('Quote server error')
+				return (None, 'Error communicating with quote server')
+			skt.close()
+		
+		print(f'response: {result}', file=sys.stderr)
+		
+		result_str = result.decode('utf-8')
+		quote = result_str.split(',')
+		
+		data = {
+			'price': float(quote[0]),
+			'stock': quote[1],
+			'userid': quote[2],
+			'timestamp': quote[3],
+			'hash': quote[4]
+		}
+		
+		newQuote = create_quote(data['stock'], data['price'], data['userid'], data['timestamp'], data['hash'])
+		quotes.replace_one({'stock': data['stock']}, newQuote, True)
 	
 	logType = 'QuoteServerType'
 	logfile += log_data(data,timestamp,logType)
@@ -1734,6 +1772,27 @@ def create_user(userid):
 		'stocks': {},
 		'buy_triggers': {},
 		'sell_triggers': {}
+	}
+	
+def create_quote(stock, price, userid, timestamp, hash):
+	'''
+	Example quote:
+	{
+		"stock": 'ABC',
+		"price": 12.55,
+		"userid": userid,						# the user who generated the original quote
+		"timestamp": 1612739531162,				# time returned from the quote server
+		"hash": 'xAnC1CbuaY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n',
+		"docker_timestamp": 1289753985			# the time on the local server used for staleness checks
+	}
+	'''
+	return {
+		'stock': stock,
+		'price': price,
+		'userid': userid,
+		'timestamp': timestamp,
+		'hash': hash,
+		'docker_timestamp': int(time.time())
 	}
 
 if __name__ == "__main__":
