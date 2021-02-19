@@ -14,6 +14,8 @@ cache_time_limit = 120 	# seconds before a cached stock quote becomes stale
 
 cached_count = 0
 total_count = 0
+buy_exec_count = 0
+sell_exec_count = 0
 
 # to print to console, use:
 #print('string here', file=sys.stderr)
@@ -40,6 +42,11 @@ def handle_commands():
 	elif (request.method == 'POST'):
 		global logfile
 		global transactionNum
+
+		global cached_count
+		global total_count
+		global buy_exec_count
+		global sell_exec_count
 		timestamp = round(time.time() * 1000)
 		# all of the potential parameters
 		data = request.json
@@ -229,17 +236,28 @@ def handle_commands():
 			return handle_dumplog()
 		
 		if (command == 'execute_buy_trigger'):
-			# need to add logging code @ lyon
+			buy_exec_count += 1
 			return handle_execute_buy_trigger(userid, stock, unit_price)
 			
 		if (command == 'execute_sell_trigger'):
-			# need to add logging code @ lyon
+			sell_exec_count += 1
 			return handle_execute_sell_trigger(userid, stock, unit_price)
+
+		if (command == 'reset_info'):
+			cached_count = 0
+			total_count = 0
+			buy_exec_count = 0
+			sell_exec_count = 0
+			return {
+				'success': 1
+			}
 			
 		if (command == 'get_info'):
 			return {
 				'cached_count': cached_count,
-				'total_count': total_count
+				'total_count': total_count,
+				'buy_exec_count': buy_exec_count,
+				'sell_exec_count': sell_exec_count
 			}
 		
 		return { 

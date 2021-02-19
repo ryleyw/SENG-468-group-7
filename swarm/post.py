@@ -28,6 +28,32 @@ response = requests.post(url, json = data)
 
 print(response.text)
 
+data = {
+    'command': 'reset_info',
+}
+
+response = requests.post(url, json = data)
+
+print(response.text)
+
+url = 'http://localhost:82'		# docker swarm monitor server
+
+data = {
+    'command': 'get_info',
+}
+
+response = requests.post(url, json = data)
+
+print(response.text)
+
+data = {
+    'command': 'reset_info',
+}
+
+response = requests.post(url, json = data)
+
+print(response.text)
+
 '''
 data = {
     'command': 'AdD',

@@ -23,9 +23,11 @@ s_buy = requests.Session()
 buy_cache_count = 0
 buy_new_count = 0
 buy_total_count = 0
+buy_exec_count = 0
 sell_cache_count = 0
 sell_new_count = 0
 sell_total_count = 0
+sell_exec_count = 0
 
 config = {
 	"DEBUG": True,
@@ -43,6 +45,10 @@ semTwo = threading.Semaphore()
 def activate_monitoring():
 	t_url = 'http://transaction_server:5000/'
 	def watch_buys():
+		global buy_cache_count
+		global buy_new_count
+		global buy_total_count
+		global buy_exec_count
 		while(True):
 			if cache.get("BUY_LIST") is None:
 				print("watching buys", flush=True)
@@ -119,6 +125,9 @@ def activate_monitoring():
 										'stock': data['stock'],
 										'unit_price': data['price']
 									}
+									
+									buy_exec_count += 1
+
 									r = s_buy.post(t_url, json=payload)
 
 									if r is not None:
@@ -141,6 +150,10 @@ def activate_monitoring():
 			time.sleep(1)
 
 	def watch_sells():
+		global sell_cache_count
+		global sell_new_count
+		global sell_total_count
+		global sell_exec_count
 		while(True):
 			if cache.get("SELL_LIST") is None:
 				print("watching sells", flush=True)
@@ -215,6 +228,8 @@ def activate_monitoring():
 										'stock': data['stock'],
 										'unit_price': data['price']
 									}
+
+									sell_exec_count += 1
 									
 									r = s_sell.post(t_url, json=payload)
 
@@ -356,6 +371,14 @@ def cancel_sell():
 			
 @app.route('/', methods=['GET', 'POST'])
 def handle_root():
+	global buy_cache_count
+	global buy_new_count
+	global buy_total_count
+	global buy_exec_count
+	global sell_cache_count
+	global sell_new_count
+	global sell_total_count
+	global sell_exec_count
 	if (request.method == 'GET'):
 		return 'This is the monitor server (running on python with flask).\n'
 		
@@ -376,10 +399,22 @@ def handle_root():
 				'buy_cache_count': buy_cache_count,
 				'buy_new_count':  buy_new_count,
 				'buy_total_count': buy_total_count,
+				'buy_exec_count': buy_exec_count,
 				'sell_cache_count': sell_cache_count,
 				'sell_new_count': sell_new_count,
-				'sell_total_count': sell_total_count 
+				'sell_total_count': sell_total_count,
+				'sell_exec_count': sell_exec_count 
 			}
+		if (command == 'reset_info'):
+			buy_cache_count = 0
+			buy_new_count = 0
+			buy_total_count = 0
+			buy_exec_count = 0
+			sell_cache_count = 0
+			sell_new_count = 0
+			sell_total_count = 0
+			sell_exec_count = 0
+			return { 'success': 1 }
 			
 		return { 
 			'success': 0, 
