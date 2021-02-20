@@ -33,10 +33,13 @@ def activate_monitoring():
 				#print("BUY_LIST:\n" + buy_list_s, flush=True)
 				for stock in buy_list.keys():
 					watchers = buy_list[stock]
-					for user in watchers:
+
+					if len(watchers) > 0:
+
+						first = list(watchers.keys())[0] 
 						skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 						skt.connect(('192.168.4.2', 4444))
-						msg = f'{stock},{user}\n'
+						msg = f'{stock},{first}\n'
 						skt.send(msg.encode())
 						result = None
 						try:
@@ -45,46 +48,49 @@ def activate_monitoring():
 							print('error from quoteserver', flush=True)
 
 						skt.close()
-						if result is not None:
-							result_str = result.decode('utf-8')
-							quote = result_str.split(',')
-							data = {
-								'price': float(quote[0]),
-								'stock':quote[1],
-								'userid':quote[2],
-								'timestamp':quote[3],
-								'hash':quote[4]
-								}
+
+						for user in watchers:
 							
-							if data['price'] < float(watchers[user]):
-
-								payload = {
-									'command': 'execute_buy_trigger',
-									'userid': user,
-									'stock': data['stock'],
-									'unit_price': data['price']
+							if result is not None:
+								result_str = result.decode('utf-8')
+								quote = result_str.split(',')
+								data = {
+									'price': float(quote[0]),
+									'stock':quote[1],
+									'userid':quote[2],
+									'timestamp':quote[3],
+									'hash':quote[4]
 								}
-								s = requests.Session()
-								r = s.post(t_url, json=payload)
+								
+								if data['price'] < float(watchers[user]):
 
-								if r is not None:
-									rj = {}
-									try:
-										rj = r.json()
-									except:
-										print("error in json decoding")
+									payload = {
+										'command': 'execute_buy_trigger',
+										'userid': user,
+										'stock': data['stock'],
+										'unit_price': data['price']
+									}
+									s = requests.Session()
+									r = s.post(t_url, json=payload)
 
-									if 'success' in rj and rj['success'] == 1:
+									if r is not None:
+										rj = {}
+										try:
+											rj = r.json()
+										except:
+											print("error in json decoding")
 
-										semOne.acquire()
-										buy_list_s = cache.get("BUY_LIST")
-										buy_list = json.loads(buy_list_s)
-										if stock in buy_list and user in buy_list[stock]:
-											buy_list[stock].pop(user, None)
-											cache.set("BUY_LIST", json.dumps(buy_list))
-										semOne.release()
+										if 'success' in rj and rj['success'] == 1:
+
+											semOne.acquire()
+											buy_list_s = cache.get("BUY_LIST")
+											buy_list = json.loads(buy_list_s)
+											if stock in buy_list and user in buy_list[stock]:
+												buy_list[stock].pop(user, None)
+												cache.set("BUY_LIST", json.dumps(buy_list))
+											semOne.release()
 									
-			time.sleep(3)
+			time.sleep(1)
 
 	def watch_sells():
 		while(True):
@@ -96,10 +102,12 @@ def activate_monitoring():
 				#print("SELL LIST:\n" + sell_list_s, flush=True)
 				for stock in sell_list.keys():
 					watchers = sell_list[stock]
-					for user in watchers:
+
+					if len(watchers) > 0:
+						first = list(watchers.keys())[0] 
 						skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 						skt.connect(('192.168.4.2', 4444))
-						msg = f'{stock},{user}\n'
+						msg = f'{stock},{first}\n'
 						skt.send(msg.encode())
 						result = None
 						try:
@@ -108,46 +116,48 @@ def activate_monitoring():
 							print('error from quoteserver', flush=True)
 
 						skt.close()
-						if result is not None:
-							result_str = result.decode('utf-8')
-							quote = result_str.split(',')
-							data = {
-								'price': float(quote[0]),
-								'stock':quote[1],
-								'userid':quote[2],
-								'timestamp':quote[3],
-								'hash':quote[4]
-								}
-							
-							if data['price'] > float(watchers[user]):
 
-								payload = {
-									'command': 'execute_sell_trigger',
-									'userid': user,
-									'stock': data['stock'],
-									'unit_price': data['price']
-								}
-								s = requests.Session()
-								r = s.post(t_url, json=payload)
-
-								if r is not None:
-									rj = {}
-									try:
-										rj = r.json()
-									except:
-										print("error in json decoding")
+						for user in watchers:	
+							if result is not None:
+								result_str = result.decode('utf-8')
+								quote = result_str.split(',')
+								data = {
+									'price': float(quote[0]),
+									'stock':quote[1],
+									'userid':quote[2],
+									'timestamp':quote[3],
+									'hash':quote[4]
+									}
 								
-									if 'success' in rj and rj['success'] == 1:
+								if data['price'] > float(watchers[user]):
 
-										semTwo.acquire()
-										sell_list_s = cache.get("SELL_LIST")
-										sell_list = json.loads(sell_list_s)
-										if stock in sell_list and user in sell_list[stock]:
-											sell_list[stock].pop(user, None)
-											cache.set("SELL_LIST", json.dumps(sell_list))
-										semTwo.release()
+									payload = {
+										'command': 'execute_sell_trigger',
+										'userid': user,
+										'stock': data['stock'],
+										'unit_price': data['price']
+									}
+									s = requests.Session()
+									r = s.post(t_url, json=payload)
+
+									if r is not None:
+										rj = {}
+										try:
+											rj = r.json()
+										except:
+											print("error in json decoding")
 									
-			time.sleep(3)
+										if 'success' in rj and rj['success'] == 1:
+
+											semTwo.acquire()
+											sell_list_s = cache.get("SELL_LIST")
+											sell_list = json.loads(sell_list_s)
+											if stock in sell_list and user in sell_list[stock]:
+												sell_list[stock].pop(user, None)
+												cache.set("SELL_LIST", json.dumps(sell_list))
+											semTwo.release()
+									
+			time.sleep(1)
 
 	buyThread = threading.Thread(target=watch_buys)
 	sellThread = threading.Thread(target=watch_sells)
