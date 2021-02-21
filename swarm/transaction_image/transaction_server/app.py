@@ -8,7 +8,10 @@ import sys
 import socket
 
 fake_quote_server = False
+
+# MAKE SURE THIS MATCHES WITH THE ONE IN THE MONITOR SERVER
 cache_time_limit = 120 	# seconds before a cached stock quote becomes stale
+
 cached_count = 0
 total_count = 0
 
