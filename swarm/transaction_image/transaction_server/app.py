@@ -236,15 +236,15 @@ def handle_commands():
 			return handle_dumplog()
 		
 		if (command == 'execute_buy_trigger'):
-			buy_exec_count += 1
+			#buy_exec_count += 1
 			return handle_execute_buy_trigger(userid, stock, unit_price)
 			
 		if (command == 'execute_sell_trigger'):
-			sell_exec_count += 1
+			#sell_exec_count += 1
 			return handle_execute_sell_trigger(userid, stock, unit_price)
 
 		if (command == 'reset_info'):
-			cached_count = 0
+			#cached_count = 0
 			total_count = 0
 			buy_exec_count = 0
 			sell_exec_count = 0
@@ -281,7 +281,7 @@ def get_quote(userid, stock):
 	global total_count
 	
 	found_fresh = False
-	total_count += 1
+	#total_count += 1
 	
 	# first we check the DB to see if we already have a cached value for this quote
 	foundQuote = quotes.find_one({'stock': stock})
@@ -299,7 +299,7 @@ def get_quote(userid, stock):
 				'timestamp': foundQuote['timestamp'],
 				'hash': foundQuote['hash']
 			}
-			cached_count += 1
+			#cached_count += 1
 			
 			print(f'cached quote: {stock}', file=sys.stderr)
 

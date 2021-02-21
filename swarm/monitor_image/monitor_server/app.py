@@ -63,7 +63,7 @@ def activate_monitoring():
 
 						first = list(watchers.keys())[0] 
 						
-						buy_total_count += 1
+						#buy_total_count += 1
 						
 						# first we check the DB to see if we already have a cached value for this quote
 						found_fresh = False
@@ -76,7 +76,7 @@ def activate_monitoring():
 								# quote is fresh so we can use it
 								found_fresh = True
 								
-								buy_cache_count += 1
+								#buy_cache_count += 1
 								
 								data = {
 									'price': foundQuote['price'],
@@ -110,7 +110,7 @@ def activate_monitoring():
 									'hash':quote[4]
 								}
 								
-								buy_new_count += 1
+								#buy_new_count += 1
 								
 								newQuote = create_quote(data['stock'], data['price'], data['userid'], data['timestamp'], data['hash'])
 								quotes.replace_one({'stock': data['stock']}, newQuote, True)
@@ -126,7 +126,7 @@ def activate_monitoring():
 										'unit_price': data['price']
 									}
 									
-									buy_exec_count += 1
+									#buy_exec_count += 1
 
 									r = s_buy.post(t_url, json=payload)
 
@@ -167,7 +167,7 @@ def activate_monitoring():
 					if len(watchers) > 0:
 						first = list(watchers.keys())[0] 
 						
-						sell_total_count += 1
+						#sell_total_count += 1
 						
 						# first we check the DB to see if we already have a cached value for this quote
 						found_fresh = False
@@ -179,7 +179,7 @@ def activate_monitoring():
 							if (diff < cache_time_limit):
 								# quote is fresh so we can use it
 								found_fresh = True
-								sell_cache_count += 1
+								#sell_cache_count += 1
 								
 								data = {
 									'price': foundQuote['price'],
@@ -202,7 +202,7 @@ def activate_monitoring():
 
 							skt.close()
 							
-							sell_new_count += 1
+							#sell_new_count += 1
 							
 							if (result is not None):
 								result_str = result.decode('utf-8')
@@ -229,7 +229,7 @@ def activate_monitoring():
 										'unit_price': data['price']
 									}
 
-									sell_exec_count += 1
+									#sell_exec_count += 1
 									
 									r = s_sell.post(t_url, json=payload)
 
