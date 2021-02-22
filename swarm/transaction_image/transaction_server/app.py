@@ -303,6 +303,10 @@ def get_quote(userid, stock):
 			
 			print(f'cached quote: {stock}', file=sys.stderr)
 
+			timestamp = round(time.time() * 1000)
+			logType = 'SystemEventType'
+			logfile += log_data(data,timestamp,logType)
+
 	if (found_fresh == False):
 		if (fake_quote_server):
 			# generate a fake quoteserver response (the hash and timestamp will always be the same, but shouldnt matter for development)
@@ -338,10 +342,10 @@ def get_quote(userid, stock):
 		
 		newQuote = create_quote(data['stock'], data['price'], data['userid'], data['timestamp'], data['hash'])
 		quotes.replace_one({'stock': data['stock']}, newQuote, True)
-	
-	timestamp = round(time.time() * 1000)
-	logType = 'QuoteServerType'
-	logfile += log_data(data,timestamp,logType)
+		
+		timestamp = round(time.time() * 1000)
+		logType = 'QuoteServerType'
+		logfile += log_data(data,timestamp,logType)
 
 	return (data, None)
 	
@@ -1666,6 +1670,25 @@ def log_data(data, timestamp, logType):
 			data['action'],
 			data['userid'],
 			"{:.2f}".format(data['amount'])))
+	elif (logType == 'SystemEventType'):
+		server = 'TSRV'
+		command = 'QUOTE'
+		return ("\t<systemEvent>\n"
+			"\t\t<timestamp>{}</timestamp>\n"
+			"\t\t<server>{}</server>\n"
+			"\t\t<transactionNum>{}</transactionNum>\n"
+			"\t\t<command>{}</command>\n"
+			"\t\t<username>{}</username>\n"
+			"\t\t<stockSymbol>{}</stockSymbol>\n"
+			"\t\t<funds>{}</funds>\n"
+			"\t</systemEvent>\n"
+			.format(timestamp,
+			server,
+			transactionNum,
+			command,
+			data['userid'],
+			data['stock'],
+			"{:.2f}".format(data['price'])))
 	elif (logType == 'ErrorEventType_1'):
 		server = 'TSRV'
 		return ("\t<errorEvent>\n"
@@ -1818,4 +1841,3 @@ def create_quote(stock, price, userid, timestamp, hash):
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", port=5000, debug=True)
-
