@@ -32,7 +32,7 @@ users = stocks_db.users
 quotes = stocks_db.quotes
 
 transactionNum = 0
-logfile = '<?xml version=\"1.0\"?>\n<log>\n'
+loglist = ['<?xml version=\"1.0\"?>\n<log>\n']
 
 @app.route('/', methods=['GET', 'POST'])
 def handle_commands():
@@ -40,14 +40,14 @@ def handle_commands():
 		return 'This is the transaction server (running on python with flask).\n'
 		
 	elif (request.method == 'POST'):
-		global logfile
-		global transactionNum
+		global loglist
 
 		global cached_count
 		global total_count
 		global buy_exec_count
 		global sell_exec_count
 		timestamp = round(time.time() * 1000)
+
 		# all of the potential parameters
 		data = request.json
 		
@@ -57,32 +57,29 @@ def handle_commands():
 		if ('amount' in data): amount = float(data['amount'])
 		if ('stock' in data): stock = data['stock']
 		if ('filename' in data): filename = data['filename']
-		if ('unit_price' in data): unit_price = data['unit_price']
-		
+		if ('unit_price' in data): unit_price = data['unit_price']		
+
 		if (command == 'add'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
 				'amount': amount
 			}
 			logType = 'UserCommandType_2'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_add(userid, amount)
 			
 		if (command == 'quote'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
 				'stock': stock
 			}
 			logType = 'UserCommandType_3'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_quote(userid, stock)
 		
 		if (command == 'buy'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -90,31 +87,28 @@ def handle_commands():
 				'amount': amount
 			}
 			logType = 'UserCommandType_4'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_buy(userid, stock, amount)
 			
 		if (command == 'commit_buy'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid
 			}
 			logType = 'UserCommandType_1'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_commit_buy(userid)
 			
 		if (command == 'cancel_buy'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid
 			}
 			logType = 'UserCommandType_1'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_cancel_buy(userid)
 			
 		if (command == 'sell'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -122,31 +116,28 @@ def handle_commands():
 				'amount': amount
 			}
 			logType = 'UserCommandType_4'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_sell(userid, stock, amount)
 			
 		if (command == 'commit_sell'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid
 			}
 			logType = 'UserCommandType_1'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_commit_sell(userid)
 			
 		if (command == 'cancel_sell'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid
 			}
 			logType = 'UserCommandType_1'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_cancel_sell(userid)
 			
 		if (command == 'set_buy_amount'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -154,11 +145,10 @@ def handle_commands():
 				'amount': amount
 			}
 			logType = 'UserCommandType_4'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_set_buy_amount(userid, stock, amount)
 			
 		if (command == 'set_buy_trigger'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -166,22 +156,20 @@ def handle_commands():
 				'amount': amount
 			}
 			logType = 'UserCommandType_4'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_set_buy_trigger(userid, stock, amount)
 			
 		if (command == 'cancel_set_buy'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
 				'stock': stock
 			}
 			logType = 'UserCommandType_3'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_cancel_set_buy(userid, stock)
 			
 		if (command == 'set_sell_amount'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -189,11 +177,10 @@ def handle_commands():
 				'amount': amount
 			}
 			logType = 'UserCommandType_4'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_set_sell_amount(userid, stock, amount)
 			
 		if (command == 'set_sell_trigger'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
@@ -201,40 +188,37 @@ def handle_commands():
 				'amount': amount
 			}
 			logType = 'UserCommandType_4'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_set_sell_trigger(userid, stock, amount)
 			
 		if (command == 'cancel_set_sell'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid,
 				'stock': stock
 			}
 			logType = 'UserCommandType_3'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_cancel_set_sell(userid, stock)
 			
 		if (command == 'display_summary'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'userid': userid
 			}
 			logType = 'UserCommandType_1'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_display_summary(userid)
 			
 		if (command == 'dumplog'):
-			transactionNum += 1
 			logInput = {
 				'command': command,
 				'filename': filename
 			}
 			logType = 'UserCommandType_0'
-			logfile += log_data(logInput,timestamp,logType)
+			loglist.append(log_data(logInput,timestamp,logType))
 			return handle_dumplog()
-		
+			
 		if (command == 'execute_buy_trigger'):
 			#buy_exec_count += 1
 			return handle_execute_buy_trigger(userid, stock, unit_price)
@@ -258,8 +242,8 @@ def handle_commands():
 				'total_count': total_count,
 				'buy_exec_count': buy_exec_count,
 				'sell_exec_count': sell_exec_count
-			}
-		
+			}	
+
 		return { 
 			'success': 0, 
 			'message': 'Commmand not recognized.',
@@ -276,7 +260,7 @@ def get_quote(userid, stock):
 	# example return from quoteserver:
 	# result = b'1.01,ABC,userid,1612739531162,xAnC1CbuaY6ndlIENDMVXbWxCMpm2x4wdZMbaxgvIHE=\n'
 	
-	global logfile
+	global loglist
 	global cached_count
 	global total_count
 	
@@ -304,8 +288,8 @@ def get_quote(userid, stock):
 			print(f'cached quote: {stock}', file=sys.stderr)
 
 			timestamp = round(time.time() * 1000)
-			logType = 'SystemEventType'
-			logfile += log_data(data,timestamp,logType)
+			logType = 'SystemEventType_4'
+			loglist.append(log_data(data,timestamp,logType))
 
 	if (found_fresh == False):
 		if (fake_quote_server):
@@ -345,7 +329,7 @@ def get_quote(userid, stock):
 		
 		timestamp = round(time.time() * 1000)
 		logType = 'QuoteServerType'
-		logfile += log_data(data,timestamp,logType)
+		loglist.append(log_data(data,timestamp,logType))
 
 	return (data, None)
 	
@@ -373,7 +357,7 @@ def get_user_from_db(userid):
 	return foundUser
 		
 def handle_add(userid, amount):
-	global logfile
+	global loglist
 
 	foundUser = get_user_from_db(userid)
 	
@@ -393,7 +377,7 @@ def handle_add(userid, amount):
 			'amount': amount
 		}
 		logType = 'AccountTransactionType'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1, 
 			'message': 'Successfully added money to the account.',
@@ -402,12 +386,11 @@ def handle_add(userid, amount):
 	
 	logInput = {
 		'command': 'ADD',
-		'userid': userid,
-		'amount': amount,
-		'error':  'Could not add money to the users account.'
+		'debug': 'Database update was unsuccessful.'
 	}
-	logType = 'ErrorEventType_2'
-	logfile += log_data(logInput,timestamp,logType)
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0, 
 		'message': 'Database update was unsuccessful.',
@@ -432,7 +415,7 @@ def handle_quote(userid, stock):
 	}
 
 def handle_buy(userid, stock, amount):
-	global logfile
+	global loglist
 
 	foundUser = get_user_from_db(userid)
 	
@@ -447,7 +430,7 @@ def handle_buy(userid, stock, amount):
 			'error':  'User does not exist in DB.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
@@ -463,7 +446,7 @@ def handle_buy(userid, stock, amount):
 			'error':  'User does not have enough money to buy stock.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': f'User only has ${foundUser["cash"]} in their account.',
@@ -482,6 +465,15 @@ def handle_buy(userid, stock, amount):
 		}
 	
 	if (quote['price'] > amount):
+		logInput = {
+			'command': 'BUY',
+			'userid': userid,
+			'stock': stock,
+			'amount': amount,
+			'error':  'Stock costs more than amount provided.'
+		}
+		logType = 'ErrorEventType_4'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': f'Stock is currently ${quote["price"]} so ${amount} is not enough.',
@@ -502,8 +494,6 @@ def handle_buy(userid, stock, amount):
 	
 	result = update_user_in_db(foundUser)
 
-	timestamp = round(time.time() * 1000)
-	
 	if (result['success'] == 1):
 		logInput = {
 			'action': 'remove',
@@ -511,13 +501,20 @@ def handle_buy(userid, stock, amount):
 			'amount': amount
 		}
 		logType = 'AccountTransactionType'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': f'You will purchase {rounded_stock_number} units of {stock} at ${quote["price"]} per unit for a total of ${buy_price}. Please confirm.',
 			'result': result['user']
 		}
 	
+	logInput = {
+		'command': 'BUY',
+		'debug': 'Database update was unsuccessful.'
+	}
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0,
 		'message': 'Database write was unsuccessful',
@@ -526,7 +523,7 @@ def handle_buy(userid, stock, amount):
 	}
 	
 def handle_commit_buy(userid):
-	global logfile
+	global loglist
 
 	foundUser = get_user_from_db(userid)
 	
@@ -539,7 +536,7 @@ def handle_commit_buy(userid):
 			'error':  'User does not exist in DB.'
 		}
 		logType = 'ErrorEventType_1'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
@@ -553,7 +550,7 @@ def handle_commit_buy(userid):
 			'error':  'User does not have a pending buy.'
 		}
 		logType = 'ErrorEventType_1'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'Commit unsuccessful. User does not have a pending buy.',
@@ -566,6 +563,13 @@ def handle_commit_buy(userid):
 	time_diff = current_time - foundUser['pending_buy']['time']
 	
 	if (time_diff > 60):
+		logInput = {
+			'command': 'COMMIT_BUY',
+			'userid': userid,
+			'error':  'Commit ignored due to stale pending buy.'
+		}
+		logType = 'ErrorEventType_1'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'Pending buy is older than 60 seconds so commit was ignored.',
@@ -594,14 +598,27 @@ def handle_commit_buy(userid):
 	foundUser['pending_buy'] = None
 	
 	result = update_user_in_db(foundUser)
-	
+
 	if (result['success'] == 1):
+		logInput = {
+			'command': 'COMMIT_BUY',
+			'userid': userid
+		}
+		logType = 'SystemEventType_1'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': f'Stock purchase confirmed.',
 			'result': result['user']
 		}
 	
+	logInput = {
+		'command': 'COMMIT_BUY',
+		'debug': 'Database update was unsuccessful.'
+	}
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0,
 		'message': 'Database write was unsuccessful',
@@ -610,7 +627,7 @@ def handle_commit_buy(userid):
 	}
 
 def handle_cancel_buy(userid):
-	global logfile
+	global loglist
 
 	foundUser = get_user_from_db(userid)
 	
@@ -623,7 +640,7 @@ def handle_cancel_buy(userid):
 			'error':  'User does not exist in DB.'
 		}
 		logType = 'ErrorEventType_1'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
@@ -637,7 +654,7 @@ def handle_cancel_buy(userid):
 			'error':  'User has no buy pending so nothing happened.'
 		}
 		logType = 'ErrorEventType_1'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': 'User has no buy pending so nothing happened.',
@@ -647,14 +664,27 @@ def handle_cancel_buy(userid):
 	foundUser['pending_buy'] = None
 	
 	result = update_user_in_db(foundUser)
-	
+
 	if (result['success'] == 1):
+		logInput = {
+			'command': 'CANCEL_BUY',
+			'userid': userid
+		}
+		logType = 'SystemEventType_1'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': 'Pending buy has been cancelled.',
 			'result': foundUser
 		}
-		
+
+	logInput = {
+		'command': 'CANCEL_BUY',
+		'debug': 'Database update was unsuccessful.'
+	}
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0,
 		'message': 'Database write was unsuccessful',
@@ -663,7 +693,7 @@ def handle_cancel_buy(userid):
 	}
 
 def handle_sell(userid, stock, amount):
-	global logfile
+	global loglist
 
 	foundUser = get_user_from_db(userid)
 	
@@ -678,7 +708,7 @@ def handle_sell(userid, stock, amount):
 			'error':  'User does not exist in DB.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
@@ -694,7 +724,7 @@ def handle_sell(userid, stock, amount):
 			'error':  'User does not have the stock to sell.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': f"User doesn't currently have any units of {stock} in their account.",
@@ -716,6 +746,15 @@ def handle_sell(userid, stock, amount):
 	sell_price = round(rounded_stock_number * quote['price'], 2)
 	
 	if (rounded_stock_number < 1):
+		logInput = {
+			'command': 'SELL',
+			'userid': userid,
+			'stock': stock,
+			'amount': amount,
+			'error':  'User did not provide enough to sell 1 unit of stock'
+		}
+		logType = 'ErrorEventType_4'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': f'${amount} isn\'t enough to sell 1 unit of {stock} at the current price of {quote["price"]}',
@@ -736,8 +775,6 @@ def handle_sell(userid, stock, amount):
 	
 	result = update_user_in_db(foundUser)
 
-	timestamp = round(time.time() * 1000)
-
 	if (result['success'] == 1):
 		logInput = {
 			'action': 'add',
@@ -745,13 +782,20 @@ def handle_sell(userid, stock, amount):
 			'amount': sell_price
 		}
 		logType = 'AccountTransactionType'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': f'You will sell {rounded_stock_number} units of {stock} at ${quote["price"]} per unit for a total of ${sell_price}. Please confirm.',
 			'result': result['user']
 		}
 	
+	logInput = {
+		'command': 'SELL',
+		'debug': 'Database update was unsuccessful.'
+	}
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0,
 		'message': 'Database write was unsuccessful',
@@ -760,7 +804,7 @@ def handle_sell(userid, stock, amount):
 	}
 
 def handle_commit_sell(userid):
-	global logfile
+	global loglist
 
 	foundUser = get_user_from_db(userid)
 	
@@ -773,7 +817,7 @@ def handle_commit_sell(userid):
 			'error':  'User does not exist in DB.'
 		}
 		logType = 'ErrorEventType_1'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
@@ -787,7 +831,7 @@ def handle_commit_sell(userid):
 			'error':  'User does not have a pending sell.'
 		}
 		logType = 'ErrorEventType_1'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'Commit unsuccessful. User does not have a pending sell.',
@@ -800,6 +844,13 @@ def handle_commit_sell(userid):
 	time_diff = current_time - foundUser['pending_sell']['time']
 	
 	if (time_diff > 60):
+		logInput = {
+			'command': 'COMMIT_SELL',
+			'userid': userid,
+			'error':  'Commit ignored due to stale pending sell.'
+		}
+		logType = 'ErrorEventType_1'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'Pending sell is older than 60 seconds so commit was ignored.',
@@ -815,6 +866,13 @@ def handle_commit_sell(userid):
 		# user already has this stock so we just add the values together
 		# first let's make sure that they still own enough of the stock (this should always be true but best to be safe)
 		if (foundUser['stocks'][stock]['units'] < foundUser['pending_sell']['num_stocks']):
+			logInput = {
+				'command': 'COMMIT_SELL',
+				'userid': userid,
+				'error':  'User does not currently own enough of this stock.'
+			}
+			logType = 'ErrorEventType_1'
+			loglist.append(log_data(logInput,timestamp,logType))
 			return {
 				'success': 0,
 				'message': f'User doesn\'t currently own enough of this stock.',
@@ -831,6 +889,13 @@ def handle_commit_sell(userid):
 			del foundUser['stocks'][stock]
 	else:
 		# user doesn't currently have the stock which shouldn't happen if we get to this point
+		logInput = {
+			'command': 'COMMIT_SELL',
+			'userid': userid,
+			'error':  'User does not currently own this stock.'
+		}
+		logType = 'ErrorEventType_1'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User doesn\'t currently own this stock.',
@@ -843,14 +908,27 @@ def handle_commit_sell(userid):
 	foundUser['pending_sell'] = None
 	
 	result = update_user_in_db(foundUser)
-	
+
 	if (result['success'] == 1):
+		logInput = {
+			'command': 'COMMIT_SELL',
+			'userid': userid
+		}
+		logType = 'SystemEventType_1'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': f'Stock sell confirmed.',
 			'result': result['user']
 		}
 	
+	logInput = {
+		'command': 'COMMIT_SELL',
+		'debug': 'Database update was unsuccessful.'
+	}
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0,
 		'message': 'Database write was unsuccessful',
@@ -859,7 +937,7 @@ def handle_commit_sell(userid):
 	}
 
 def handle_cancel_sell(userid):
-	global logfile
+	global loglist
 
 	foundUser = get_user_from_db(userid)
 	
@@ -872,7 +950,7 @@ def handle_cancel_sell(userid):
 			'error':  'User does not exist in DB.'
 		}
 		logType = 'ErrorEventType_1'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
@@ -886,7 +964,7 @@ def handle_cancel_sell(userid):
 			'error':  'User has no sell pending so nothing happened.'
 		}
 		logType = 'ErrorEventType_1'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': 'User has no sell pending so nothing happened.',
@@ -896,14 +974,27 @@ def handle_cancel_sell(userid):
 	foundUser['pending_sell'] = None
 	
 	result = update_user_in_db(foundUser)
-	
+
 	if (result['success'] == 1):
+		logInput = {
+			'command': 'CANCEL_SELL',
+			'userid': userid
+		}
+		logType = 'SystemEventType_1'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': 'Pending sell has been cancelled.',
 			'result': foundUser
 		}
-		
+
+	logInput = {
+		'command': 'CANCEL_SELL',
+		'debug': 'Database update was unsuccessful.'
+	}
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0,
 		'message': 'Database write was unsuccessful',
@@ -912,7 +1003,7 @@ def handle_cancel_sell(userid):
 	}
 
 def handle_set_buy_amount(userid, stock, amount):
-	global logfile
+	global loglist
 
 	foundUser = get_user_from_db(userid)
 
@@ -927,7 +1018,7 @@ def handle_set_buy_amount(userid, stock, amount):
 			'error':  'User does not exist in DB.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
@@ -943,7 +1034,7 @@ def handle_set_buy_amount(userid, stock, amount):
 			'error':  'User needs to add more money.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User does not have enough moeny in their account.',
@@ -967,14 +1058,29 @@ def handle_set_buy_amount(userid, stock, amount):
 	}
 	
 	result = update_user_in_db(foundUser)
-	
+
 	if (result['success'] == 1):
+		logInput = {
+			'command': 'SET_BUY_AMOUNT',
+			'userid': userid,
+			'stock': stock,
+			'amount': amount
+		}
+		logType = 'SystemEventType_3'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': f'Set buy amount confirmed, but still need to set buy trigger.',
 			'result': result['user']
 		}
 	
+	logInput = {
+		'command': 'SET_BUY_AMOUNT',
+		'debug': 'Database update was unsuccessful.'
+	}
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0,
 		'message': 'Database write was unsuccessful',
@@ -983,7 +1089,7 @@ def handle_set_buy_amount(userid, stock, amount):
 	}
 
 def handle_set_buy_trigger(userid, stock, amount):
-	global logfile
+	global loglist
 	
 	foundUser = get_user_from_db(userid)
 
@@ -998,7 +1104,7 @@ def handle_set_buy_trigger(userid, stock, amount):
 			'error':  'User does not exist in DB.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
@@ -1014,7 +1120,7 @@ def handle_set_buy_trigger(userid, stock, amount):
 			'error':  'User must execute a set_buy_amount for the stock first.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User does not yet have a buy amount set for this stock.',
@@ -1031,7 +1137,7 @@ def handle_set_buy_trigger(userid, stock, amount):
 			'error':  'Not enough cash in the buy trigger to afford 1 stock at this price.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'Cash committed to the buy cannot be less than the buy trigger.',
@@ -1043,23 +1149,38 @@ def handle_set_buy_trigger(userid, stock, amount):
 	foundUser['buy_triggers'][stock]['active'] = 1
 	
 	result = update_user_in_db(foundUser)
-	
+
 	if (result['success'] == 1):
-                monitor_url = 'http://monitor_server:5000/addToBuyList'
-                payload = {
-                        'stock':stock,
-                        'userid':userid,
-                        'trigger':amount
-                        }
-                s = requests.Session()
-                s.post(monitor_url, json = payload)
-                
-                return {
+		logInput = {
+			'command': 'SET_BUY_TRIGGER',
+			'userid': userid,
+			'stock': stock,
+			'amount': amount
+		}
+		logType = 'SystemEventType_3'
+		loglist.append(log_data(logInput,timestamp,logType))
+		monitor_url = 'http://monitor_server:5000/addToBuyList'
+		payload = {
+				'stock':stock,
+				'userid':userid,
+				'trigger':amount
+				}
+		s = requests.Session()
+		s.post(monitor_url, json = payload)
+        
+		return {
 			'success': 1,
 			'message': f'Set buy trigger confirmed.',
 			'result': result['user']
 		}
 	
+	logInput = {
+		'command': 'SET_BUY_TRIGGER',
+		'debug': 'Database update was unsuccessful.'
+	}
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0,
 		'message': 'Database write was unsuccessful',
@@ -1068,7 +1189,7 @@ def handle_set_buy_trigger(userid, stock, amount):
 	}
 
 def handle_cancel_set_buy(userid, stock):
-	global logfile
+	global loglist
 
 	foundUser = get_user_from_db(userid)
 	
@@ -1082,7 +1203,7 @@ def handle_cancel_set_buy(userid, stock):
 			'error':  'User does not exist in DB.'
 		}
 		logType = 'ErrorEventType_3'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
@@ -1097,7 +1218,7 @@ def handle_cancel_set_buy(userid, stock):
 			'error':  'User does not currently have a pending buy for this stock so nothing happened.'
 		}
 		logType = 'ErrorEventType_3'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': 'User does not currently have a pending buy for this stock so nothing happened.',
@@ -1111,7 +1232,13 @@ def handle_cancel_set_buy(userid, stock):
 	result = update_user_in_db(foundUser)
 	
 	if (result['success'] == 1):
-
+		logInput = {
+			'command': 'CANCEL_SET_BUY',
+			'userid': userid,
+			'stock': stock
+		}
+		logType = 'SystemEventType_2'
+		loglist.append(log_data(logInput,timestamp,logType))
 		monitor_url = 'http://monitor_server:5000/cancelBuy'
 		payload = {
 			'stock': stock,
@@ -1126,6 +1253,13 @@ def handle_cancel_set_buy(userid, stock):
 			'result': result['user']
 		}
 	
+	logInput = {
+		'command': 'CANCEL_SET_BUY',
+		'debug': 'Database update was unsuccessful.'
+	}
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0,
 		'message': 'Database write was unsuccessful',
@@ -1134,7 +1268,7 @@ def handle_cancel_set_buy(userid, stock):
 	}
 
 def handle_set_sell_amount(userid, stock, amount):
-	global logfile
+	global loglist
 	
 	foundUser = get_user_from_db(userid)
 	
@@ -1149,7 +1283,7 @@ def handle_set_sell_amount(userid, stock, amount):
 			'error':  'User does not exist in DB.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
@@ -1165,7 +1299,7 @@ def handle_set_sell_amount(userid, stock, amount):
 			'error':  'User does not own any of this stock yet.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User does not currently own any of that stock.',
@@ -1182,7 +1316,7 @@ def handle_set_sell_amount(userid, stock, amount):
 			'error':  'User does not own enough of this stock.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User does not currently own enough of the stock.',
@@ -1205,14 +1339,29 @@ def handle_set_sell_amount(userid, stock, amount):
 	}
 			
 	result = update_user_in_db(foundUser)
-	
+
 	if (result['success'] == 1):
+		logInput = {
+			'command': 'SET_SELL_AMOUNT',
+			'userid': userid,
+			'stock': stock,
+			'amount': amount
+		}
+		logType = 'SystemEventType_3'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': f'Set sell amount confirmed, but still need to set sell trigger.',
 			'result': result['user']
 		}
 	
+	logInput = {
+		'command': 'SET_SELL_AMOUNT',
+		'debug': 'Database update was unsuccessful.'
+	}
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0,
 		'message': 'Database write was unsuccessful',
@@ -1221,8 +1370,8 @@ def handle_set_sell_amount(userid, stock, amount):
 	}
 
 def handle_set_sell_trigger(userid, stock, amount):
-	global logfile
-	
+	global loglist
+
 	foundUser = get_user_from_db(userid)
 	
 	timestamp = round(time.time() * 1000)
@@ -1236,7 +1385,7 @@ def handle_set_sell_trigger(userid, stock, amount):
 			'error':  'User does not exist in DB.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
@@ -1252,7 +1401,7 @@ def handle_set_sell_trigger(userid, stock, amount):
 			'error':  'User must execute a set_sell_amount for this stock first.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not yet created a pending sell for this stock.',
@@ -1269,7 +1418,7 @@ def handle_set_sell_trigger(userid, stock, amount):
 			'error':  'User must have sold the stock after setting the sell amount.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User doesn\'t currently own any of that stock.',
@@ -1286,7 +1435,7 @@ def handle_set_sell_trigger(userid, stock, amount):
 			'error':  'User must have sold some of the stock after setting the sell amount.'
 		}
 		logType = 'ErrorEventType_4'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User doesn\'t currently own enough of the stock. Try a new set_sell_amount.',
@@ -1307,6 +1456,14 @@ def handle_set_sell_trigger(userid, stock, amount):
 	result = update_user_in_db(foundUser)
 	
 	if (result['success'] == 1):
+		logInput = {
+			'command': 'SET_SELL_TRIGGER',
+			'userid': userid,
+			'stock': stock,
+			'amount': amount
+		}
+		logType = 'SystemEventType_3'
+		loglist.append(log_data(logInput,timestamp,logType))
 		print("ATTEMPTING TO ADD TO MONITOR SERVER SELL LIST", flush=True)
 		monitor_url = 'http://monitor_server:5000/addToSellList'
 		payload = {
@@ -1323,6 +1480,13 @@ def handle_set_sell_trigger(userid, stock, amount):
 			'result': result['user']
 		}
 	
+	logInput = {
+		'command': 'SET_SELL_TRIGGER',
+		'debug': 'Database update was unsuccessful.'
+	}
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0,
 		'message': 'Database write was unsuccessful',
@@ -1332,8 +1496,8 @@ def handle_set_sell_trigger(userid, stock, amount):
 		
 
 def handle_cancel_set_sell(userid, stock):
-	global logfile
-	
+	global loglist
+
 	foundUser = get_user_from_db(userid)
 
 	timestamp = round(time.time() * 1000)
@@ -1346,7 +1510,7 @@ def handle_cancel_set_sell(userid, stock):
 			'error':  'User does not exist in DB.'
 		}
 		logType = 'ErrorEventType_3'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
@@ -1361,7 +1525,7 @@ def handle_cancel_set_sell(userid, stock):
 			'error':  'User does not currently have a pending sell for this stock so nothing happened.'
 		}
 		logType = 'ErrorEventType_3'
-		logfile += log_data(logInput,timestamp,logType)
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': 'User does not currently have a pending sell for this stock so nothing happened.',
@@ -1385,7 +1549,13 @@ def handle_cancel_set_sell(userid, stock):
 	result = update_user_in_db(foundUser)
 	
 	if (result['success'] == 1):
-		
+		logInput = {
+			'command': 'CANCEL_SET_SELL',
+			'userid': userid,
+			'stock': stock
+		}
+		logType = 'SystemEventType_2'
+		loglist.append(log_data(logInput,timestamp,logType))
 		monitor_url = 'http://monitor_server:5000/cancelSell'
 		payload = {
 			'stock': stock,
@@ -1400,6 +1570,13 @@ def handle_cancel_set_sell(userid, stock):
 			'result': result['user']
 		}
 	
+	logInput = {
+		'command': 'CANCEL_SET_SELL',
+		'debug': 'Database update was unsuccessful.'
+	}
+	logType = 'DebugType'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	return {
 		'success': 0,
 		'message': 'Database write was unsuccessful',
@@ -1411,29 +1588,63 @@ def handle_display_summary(userid):
 	return {'success': 1, 'message': 'This is the display_summary command.'}
 
 def handle_dumplog():
-	global logfile
-	global transactionNum
-	logs = logfile + '</log>\n'
+	global loglist
+	loglist.append('</log>\n')
+	logfile = ''
+
+	for log in loglist:
+		logfile += log
+
 	transactionNum = 0
-	logfile = '<?xml version=\"1.0\"?>\n<log>\n'
+	loglist.clear()
+	loglist = ['<?xml version=\"1.0\"?>\n<log>\n']
 	return {
 		'success': 1, 
 		'message': 'This is the dumplog command.',
-		'result': logs
+		'result': logfile
 	}
-	
+
 def handle_execute_buy_trigger(userid, stock, unit_price):
 	# this function is called when the monitor server detects a stock price is 
 	# within a trigger limit so we can now execute that trigger at the given price
+	global loglist
+	
 	foundUser = get_user_from_db(userid)
 	
+	timestamp = round(time.time() * 1000)
+
+	logInput = {
+		'command': 'COMMIT_BUY',
+		'userid': userid,
+		'stock': stock,
+		'amount': unit_price
+	}
+	logType = 'SystemEventType_3'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	if (foundUser == None):
+		logInput = {
+			'command': 'COMMIT_BUY',
+			'userid': userid,
+			'stock': stock,
+			'error':  'User does not exist in DB.'
+		}
+		logType = 'ErrorEventType_3'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
 			'error': 'User does not exist in DB.'
 		}
 	if (stock not in foundUser['buy_triggers']):
+		logInput = {
+			'command': 'COMMIT_BUY',
+			'userid': userid,
+			'stock': stock,
+			'error':  'User does not have a buy trigger for this stock.'
+		}
+		logType = 'ErrorEventType_3'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'Trigger execution unsuccessful. User does not have a buy trigger for this stock.',
@@ -1441,6 +1652,14 @@ def handle_execute_buy_trigger(userid, stock, unit_price):
 			'error': 'User does not have a buy trigger for this stock.'
 		}	
 	if (foundUser['buy_triggers'][stock] == None):
+		logInput = {
+			'command': 'COMMIT_BUY',
+			'userid': userid,
+			'stock': stock,
+			'error':  'User does not have a buy trigger for this stock.'
+		}
+		logType = 'ErrorEventType_3'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'Trigger execution unsuccessful. User does not have a buy trigger for this stock.',
@@ -1449,6 +1668,14 @@ def handle_execute_buy_trigger(userid, stock, unit_price):
 		}
 		
 	if (foundUser['buy_triggers'][stock]['active'] == 0):
+		logInput = {
+			'command': 'COMMIT_BUY',
+			'userid': userid,
+			'stock': stock,
+			'error':  'Buy trigger inactive.'
+		}
+		logType = 'ErrorEventType_3'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'Trigger execution unsuccessful. User\'s buy trigger for this stock is not currently active.',
@@ -1484,6 +1711,13 @@ def handle_execute_buy_trigger(userid, stock, unit_price):
 	result = update_user_in_db(foundUser)
 	
 	if (result['success'] == 1):
+		logInput = {
+			'action': 'remove',
+			'userid': userid,
+			'amount': cost
+		}
+		logType = 'AccountTransactionType'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': f'Buy trigger executed.',
@@ -1500,15 +1734,44 @@ def handle_execute_buy_trigger(userid, stock, unit_price):
 def handle_execute_sell_trigger(userid, stock, unit_price):
 	# this function is called when the monitor server detects a stock price is 
 	# within a trigger limit so we can now execute that trigger at the given price
+	global loglist
+
 	foundUser = get_user_from_db(userid)
 	
+	timestamp = round(time.time() * 1000)
+
+	logInput = {
+		'command': 'COMMIT_SELL',
+		'userid': userid,
+		'stock': stock,
+		'amount': unit_price
+	}
+	logType = 'SystemEventType_3'
+	loglist.append(log_data(logInput,timestamp,logType))
+
 	if (foundUser == None):
+		logInput = {
+			'command': 'COMMIT_SELL',
+			'userid': userid,
+			'stock': stock,
+			'error':  'User does not exist in DB.'
+		}
+		logType = 'ErrorEventType_3'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'User has not added any money to their account yet.',
 			'error': 'User does not exist in DB.'
 		}
 	if (stock not in foundUser['sell_triggers']):
+		logInput = {
+			'command': 'COMMIT_SELL',
+			'userid': userid,
+			'stock': stock,
+			'error':  'User does not have a sell trigger for this stock.'
+		}
+		logType = 'ErrorEventType_3'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'Trigger execution unsuccessful. User does not have a buy trigger for this stock.',
@@ -1516,6 +1779,14 @@ def handle_execute_sell_trigger(userid, stock, unit_price):
 			'error': 'User does not have a sell trigger for this stock.'
 		}	
 	if (foundUser['sell_triggers'][stock] == None):
+		logInput = {
+			'command': 'COMMIT_SELL',
+			'userid': userid,
+			'stock': stock,
+			'error':  'User does not have a sell trigger for this stock.'
+		}
+		logType = 'ErrorEventType_3'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 0,
 			'message': 'Commit unsuccessful. User does not have a sell trigger for this stock.',
@@ -1541,6 +1812,13 @@ def handle_execute_sell_trigger(userid, stock, unit_price):
 	result = update_user_in_db(foundUser)
 	
 	if (result['success'] == 1):
+		logInput = {
+			'action': 'add',
+			'userid': userid,
+			'amount': total_price
+		}
+		logType = 'AccountTransactionType'
+		loglist.append(log_data(logInput,timestamp,logType))
 		return {
 			'success': 1,
 			'message': f'Sell trigger executed.',
@@ -1578,6 +1856,7 @@ def log_data(data, timestamp, logType):
 			data['hash'].rstrip()))
 	elif (logType == 'UserCommandType_0'):
 		server = 'CLI'
+		transactionNum += 1
 		return ("\t<userCommand>\n"
 			"\t\t<timestamp>{}</timestamp>\n"
 			"\t\t<server>{}</server>\n"
@@ -1592,6 +1871,7 @@ def log_data(data, timestamp, logType):
 			data['filename']))
 	elif (logType == 'UserCommandType_1'):
 		server = 'CLI'
+		transactionNum += 1
 		return ("\t<userCommand>\n"
 			"\t\t<timestamp>{}</timestamp>\n"
 			"\t\t<server>{}</server>\n"
@@ -1606,6 +1886,7 @@ def log_data(data, timestamp, logType):
 			data['userid']))
 	elif (logType == 'UserCommandType_2'):
 		server = 'CLI'
+		transactionNum += 1
 		return ("\t<userCommand>\n"
 			"\t\t<timestamp>{}</timestamp>\n"
 			"\t\t<server>{}</server>\n"
@@ -1622,6 +1903,7 @@ def log_data(data, timestamp, logType):
 			"{:.2f}".format(data['amount'])))
 	elif (logType == 'UserCommandType_3'):
 		server = 'CLI'
+		transactionNum += 1
 		return ("\t<userCommand>\n"
 			"\t\t<timestamp>{}</timestamp>\n"
 			"\t\t<server>{}</server>\n"
@@ -1638,6 +1920,7 @@ def log_data(data, timestamp, logType):
 			data['stock'].upper()))
 	elif (logType == 'UserCommandType_4'):
 		server = 'CLI'
+		transactionNum += 1
 		return ("\t<userCommand>\n"
 			"\t\t<timestamp>{}</timestamp>\n"
 			"\t\t<server>{}</server>\n"
@@ -1670,7 +1953,56 @@ def log_data(data, timestamp, logType):
 			data['action'],
 			data['userid'],
 			"{:.2f}".format(data['amount'])))
-	elif (logType == 'SystemEventType'):
+	elif (logType == 'SystemEventType_1'):
+		server = 'TSRV'
+		return ("\t<systemEvent>\n"
+			"\t\t<timestamp>{}</timestamp>\n"
+			"\t\t<server>{}</server>\n"
+			"\t\t<transactionNum>{}</transactionNum>\n"
+			"\t\t<command>{}</command>\n"
+			"\t\t<username>{}</username>\n"
+			"\t</systemEvent>\n"
+			.format(timestamp,
+			server,
+			transactionNum,
+			data['command'].upper(),
+			data['userid']))
+	elif (logType == 'SystemEventType_2'):
+		server = 'MSRV'
+		return ("\t<systemEvent>\n"
+			"\t\t<timestamp>{}</timestamp>\n"
+			"\t\t<server>{}</server>\n"
+			"\t\t<transactionNum>{}</transactionNum>\n"
+			"\t\t<command>{}</command>\n"
+			"\t\t<username>{}</username>\n"
+			"\t\t<stockSymbol>{}</stockSymbol>\n"
+			"\t\t<funds>{}</funds>\n"
+			"\t</systemEvent>\n"
+			.format(timestamp,
+			server,
+			transactionNum,
+			data['command'].upper(),
+			data['userid'],
+			data['stock'].upper()))
+	elif (logType == 'SystemEventType_3'):
+		server = 'TSRV'
+		return ("\t<systemEvent>\n"
+			"\t\t<timestamp>{}</timestamp>\n"
+			"\t\t<server>{}</server>\n"
+			"\t\t<transactionNum>{}</transactionNum>\n"
+			"\t\t<command>{}</command>\n"
+			"\t\t<username>{}</username>\n"
+			"\t\t<stockSymbol>{}</stockSymbol>\n"
+			"\t\t<funds>{}</funds>\n"
+			"\t</systemEvent>\n"
+			.format(timestamp,
+			server,
+			transactionNum,
+			data['command'].upper(),
+			data['userid'],
+			data['stock'].upper(),
+			"{:.2f}".format(data['amount'])))
+	elif (logType == 'SystemEventType_4'):
 		server = 'TSRV'
 		command = 'QUOTE'
 		return ("\t<systemEvent>\n"
@@ -1761,6 +2093,20 @@ def log_data(data, timestamp, logType):
 			data['stock'].upper(),
 			"{:.2f}".format(data['amount']),
 			data['error']))
+	elif (logType == 'DebugType'):
+		server = 'TSRV'
+		return ("\t<debugEvent>\n"
+			"\t\t<timestamp>{}</timestamp>\n"
+			"\t\t<server>{}</server>\n"
+			"\t\t<transactionNum>{}</transactionNum>\n"
+			"\t\t<command>{}</command>\n"
+			"\t\t<debugMessage>{}</debugMessage>\n"
+			"\t</debugEvent>\n"
+			.format(timestamp,
+			server,
+			transactionNum,
+			data['command'].upper(),
+			data['debug']))
 	
 def create_user(userid):
 	'''
