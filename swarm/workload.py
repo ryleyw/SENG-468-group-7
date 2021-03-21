@@ -3,8 +3,9 @@ import threading
 import json
 import requests
 import time
+import concurrent.futures
 
-workload_filename = "./workloads/workload10.txt"
+workload_filename = "./workloads/workload45.txt"
 url = 'http://localhost:80/api/command/' 		# docker swarm web app
 #url = 'http://localhost:81'	   				# docker swarm transaction server
 
@@ -18,7 +19,7 @@ def thread_function(userid):
 	for data in command_list:
 		response = s.post(url, json = data)
 		req_count[userid] += 1
-		
+
 
 def main():
 	threads = []
@@ -84,6 +85,8 @@ def main():
 						'amount': words[4]
 					}
 				elif (command == 'SET_BUY_TRIGGER'):
+					if (words[4] == '' or words[4] == None):
+						words[4] = 0.00
 					req = {
 						'command': command,
 						'stock': words[3],
@@ -101,6 +104,8 @@ def main():
 						'amount': words[4]
 					}
 				elif (command == 'SET_SELL_TRIGGER'):
+					if (words[4] == '' or words[4] == None):
+						words[4] = 0.00
 					req = {
 						'command': command,
 						'stock': words[3],
@@ -140,6 +145,10 @@ def main():
 		
 	for t in threads:
 		t.join()
+
+	#Use this for final2019 user workload
+	#with concurrent.futures.ThreadPoolExecutor(max_workers=600) as executor:
+	#	executor.map(thread_function, users)
 	
 	if (logreq):
 		response = requests.post(url, logreq)
