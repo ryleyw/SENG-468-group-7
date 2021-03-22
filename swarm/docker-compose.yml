@@ -121,7 +121,7 @@ services:
             - mongos0
         restart: on-failure
         
-    # express/react web app
+    # express web app for api
     web_app:
         hostname: web_app
         container_name: web_app
@@ -159,6 +159,19 @@ services:
             - "cluster_net"
         ports:
             - "82:5000"   
+            
+    # react web app for frontend
+    frontend_server:
+        hostname: frontend_server
+        container_name: frontend_server
+        image: frontend_server:latest
+        deploy:
+            mode: global
+        command: /bin/sh -c "cd /app && npm start"
+        networks:
+            - "cluster_net"
+        ports:
+            - "83:3000"
             
     # express/react transaction_server
     #transaction_server:

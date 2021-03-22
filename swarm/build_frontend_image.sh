@@ -1,0 +1,1 @@
+docker build -t frontend_server ./frontend_image/
