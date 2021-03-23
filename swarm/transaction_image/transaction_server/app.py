@@ -26,7 +26,7 @@ sell_exec_count = 0
 # however it's plausible that boolean values would require less space (int might be 32 or even 64 bit, whereas bool could be 8 bit)
 
 app = Flask(__name__)
-cors = CORS(app)
+CORS(app)
 
 client = MongoClient('mongodb://mongos0:27017')
 stocks_db = client.stocks

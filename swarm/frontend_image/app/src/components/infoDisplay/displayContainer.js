@@ -43,7 +43,7 @@ function DisplayContainer(props) {
                 {selected=="mystocks" ? 
                 (<div>
                     <div className="contentTitle">My Stocks</div>
-                    <MyStocks info={props.info} setInfo={props.setInfo}/>
+                    <MyStocks user={props.user} info={props.info} setInfo={props.setInfo}/>
                  </div>
                 )
                 : selected=="mytriggers" ?
