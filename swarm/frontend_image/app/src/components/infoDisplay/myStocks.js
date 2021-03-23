@@ -1,5 +1,7 @@
 import React, {useState} from 'react'
 import axios from 'axios'
+import StockWatcher from './stockWatcher'
+import SellButton from './sellButton'
 
 function MyStocks(props) {
 
@@ -43,11 +45,10 @@ function MyStocks(props) {
 
     function buyStock(e) {
 	e.preventDefault()
-    const sendAmount = quote * amount
 	const data = {
 		'command': 'BUY',
 		'stock': stock,
-		'amount': sendAmount,
+		'amount': amount,
 		'userid': props.user
 	}
 
@@ -100,28 +101,32 @@ function MyStocks(props) {
     function changeAmount(e) {
 	setAmount(e.target.value)
     }
+    
+    
+    var stockList = null
 
-    const stockList = Object.keys(fakeData).map((element, index) => 
-        <div className="entryContainer" key={index}>
-            <div className="entry">
-                {element}
-            </div>
-            <div className="entry">
-                {fakeData[element].cost}
-            </div>
-            <div className="entry">
-                {fakeData[element].units}
-            </div>
-            <div className="entry">
-                CURRENT PRICE
-            </div>
-            <div className="entry">
-                SELL
-            </div>
-        </div>
-    )
+    if (props.info != null) {
+	stockList = Object.keys(props.info.stocks).map((element, index) => 
+		<div className="entryContainer" key={index}>
+		    <div className="entry">
+		        {element}
+		    </div>
+		    <div className="entry">
+		        {props.info.stocks[element].cost}
+		    </div>
+		    <div className="entry">
+		        {props.info.stocks[element].units}
+		    </div>
+		    <div className="entry">
+		        <StockWatcher user={props.user} stock={element} />
+		    </div>
+		    <div className="entry">
+		        <SellButton user={props.user} stock={element} setInfo={props.setInfo}/>
+		    </div>
+		</div>
+    	)
+    }
 
-    console.log(stockList)
     const modal = (
         <div className="modal">
             <button onClick={() => setShowModal(false)}>close</button>

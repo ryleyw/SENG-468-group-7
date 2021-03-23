@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 
 
@@ -11,13 +11,32 @@ function StockWatcher(props) {
     const [loading, setLoading] = useState(false)
     //useeffect to get stock and set quote price
 
+    useEffect(() => {
+
+    	const data = {
+		'command': 'QUOTE',
+		'stock': props.stock,
+		'userid': props.user
+	}
+
+	axios.post('http://localhost:81/', data).
+		then((response) => {
+			console.log(response.data)
+			setQuote(response.data.result.price)
+		}, (error) => {
+			alert(error)
+		})
+    }, []);
+
     return (
         <div>
-        {loading && 
+        {quote!=null && 
             <div className="stockWatcher">
-                Quote Price
+		{quote}
             </div>
         }
         </div>
     )
 }
+
+export default StockWatcher
