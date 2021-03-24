@@ -1,0 +1,14 @@
+.bar {
+    width: 100%;
+    top: 0;
+    position: fixed;
+    height: 50px;
+    background: lightblue;
+}
+
+.main {
+    margin: auto;
+    margin-top: 50px;
+    width: 75%;
+    background: lightgray;
+}

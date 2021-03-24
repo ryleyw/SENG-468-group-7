@@ -1,0 +1,36 @@
+.bar {
+    width: 100%;
+    top: 0;
+    position: fixed;
+    height: 50px;
+    background: lightblue;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding-top: 10px;
+}
+
+.main {
+    margin: auto;
+    margin-top: 100px;
+    width: 75%;
+    background: lightgray;
+}
+
+.topTitle {
+    float: left;
+    font-size: 22pt;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+.topInput {
+    float: left;
+    font-size: 16pt;
+    width: 300px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.topButton {
+    float: left;
+    width: 200px;
+}

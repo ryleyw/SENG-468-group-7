@@ -57,6 +57,9 @@ def handle_commands():
 		if ('filename' in data): filename = data['filename']
 		if ('unit_price' in data): unit_price = data['unit_price']		
 
+		if (command == 'checkuser'):
+			return handle_check_user(userid)
+
 		if (command == 'add'):
 			logInput = {
 				'logType': 'UserCommandType_2',
@@ -68,7 +71,7 @@ def handle_commands():
 			}
 			logs.insert_one(logInput)
 			return handle_add(userid, amount)
-			
+
 		if (command == 'quote'):
 			logInput = {
 				'logType': 'UserCommandType_3',
@@ -280,6 +283,24 @@ def handle_commands():
 			'error': 'Command not recognized.'
 		}
 
+def handle_check_user(userid):
+
+	foundUser = get_user_from_db(userid)
+
+	if (foundUser == None):
+		foundUser = create_user(userid)
+		return {
+			'success': 1, 
+			'message': 'Successfully created new user to the account.',
+			'result': get_user_from_db(userid)
+	}	
+
+	return {
+		'success': 1, 
+		'message': 'Successfully created new user to the account.',
+		'result': get_user_from_db(userid)
+	}
+    	
 def get_quote(userid, stock):
 	# this function will send a request to the quote server then return the result
 	# for now we just return fake results

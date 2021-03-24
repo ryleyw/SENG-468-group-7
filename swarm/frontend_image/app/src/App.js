@@ -1,25 +1,24 @@
-import logo from './logo.svg';
 import './App.css';
+import TopBar from './components/topBar'
+import MainContainer from './components/mainContainer'
+import { useState } from 'react';
 
 function App() {
+
+  const [globalUser, setGlobalUser] = useState(null)
+
+  function setUser(userid) {
+    setGlobalUser(userid)
+  }
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      {/* select user from somewhere here - maybe jsut a text field */}
+      <TopBar setUser={setUser}/>
+      <MainContainer user={globalUser}/>
     </div>
   );
 }
 
 export default App;
+
