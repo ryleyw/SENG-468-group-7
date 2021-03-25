@@ -13,7 +13,7 @@ function MainContainer(props) {
                 (<div>
                     <div className="welcome">Welcome {props.user}!</div>
                     <TotalsDisplay user={props.user} info={props.info} setInfo={props.setInfo}/>
-                    <DisplayContainer user={props.user} info={props.info}/>
+                    <DisplayContainer user={props.user} info={props.info} setInfo={props.setInfo}/>
                 </div>)
             } 
         </div>

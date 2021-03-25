@@ -1,5 +1,6 @@
 import React, {useState} from 'react'
 import '../../css/info.css'
+import MyStocks from './myStocks'
 
 function DisplayContainer(props) {
 
@@ -40,7 +41,11 @@ function DisplayContainer(props) {
             </div>
             <div className="contentDisplay">
                 {selected=="mystocks" ? 
-                (<div className="contentTitle">My Stocks</div>)
+                (<div>
+                    <div className="contentTitle">My Stocks</div>
+                    <MyStocks info={props.info} setInfo={props.setInfo}/>
+                 </div>
+                )
                 : selected=="mytriggers" ?
                 (<div className="contentTitle">My Triggers</div>)
                 : 
