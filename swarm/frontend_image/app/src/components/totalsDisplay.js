@@ -34,7 +34,7 @@ function TotalsDisplay(props) {
             <div>
             Enter amount of money to add:
                 <form onSubmit={addMoney}>
-                    <input type="number" onChange={handleChange} value={moneyAdd}></input>
+                    <input type="number" step=".01" onChange={handleChange} value={moneyAdd}></input>
                     <input type="submit" className="addButton" value="add cash"></input>
                 </form>
             </div>
