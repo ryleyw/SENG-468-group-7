@@ -6,16 +6,21 @@ import { useState } from 'react';
 function App() {
 
   const [globalUser, setGlobalUser] = useState(null)
+  const [userInfo, setUserInfo] = useState(null)
 
   function setUser(userid) {
     setGlobalUser(userid)
   }
 
+  function setInfo(info) {
+    setUserInfo(info)
+  }
+
   return (
     <div className="App">
       {/* select user from somewhere here - maybe jsut a text field */}
-      <TopBar setUser={setUser}/>
-      <MainContainer user={globalUser}/>
+      <TopBar setUser={setUser} setInfo={setInfo}/>
+      <MainContainer info={userInfo} user={globalUser} setInfo={setInfo}/>
     </div>
   );
 }

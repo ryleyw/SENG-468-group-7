@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import request
 from pymongo import MongoClient
+from flask_cors import CORS
 import time
 import requests
 import random
@@ -25,6 +26,7 @@ sell_exec_count = 0
 # however it's plausible that boolean values would require less space (int might be 32 or even 64 bit, whereas bool could be 8 bit)
 
 app = Flask(__name__)
+cors = CORS(app)
 
 client = MongoClient('mongodb://mongos0:27017')
 stocks_db = client.stocks
@@ -289,16 +291,21 @@ def handle_check_user(userid):
 
 	if (foundUser == None):
 		foundUser = create_user(userid)
-		return {
-			'success': 1, 
-			'message': 'Successfully created new user to the account.',
-			'result': get_user_from_db(userid)
-	}	
+
+	result = update_user_in_db(foundUser)
+
+	if (result['success'] == 1):
+    		return {
+				'success': 1, 
+				'message': 'Successfully retrieved user account.',
+				'result': result['user']
+			}
 
 	return {
-		'success': 1, 
-		'message': 'Successfully created new user to the account.',
-		'result': get_user_from_db(userid)
+		'success': 0, 
+		'message': 'Database update was unsuccessful.',
+		'result': get_user_from_db(userid),
+		'error': result['error']
 	}
     	
 def get_quote(userid, stock):
@@ -434,8 +441,8 @@ def handle_add(userid, amount):
 	if (foundUser == None):
 		foundUser = create_user(userid)
 	
-	foundUser['cash'] += float(amount)
-	
+	foundUser['cash'] = round((foundUser['cash'] + float(amount)), 2)
+
 	result = update_user_in_db(foundUser)
 	
 	if (result['success'] == 1):

@@ -34,3 +34,28 @@
     float: left;
     width: 200px;
 }
+
+.welcome {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-size: 20pt;
+}
+
+.totals {
+    margin-top: '25 px';
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-size: 16pt;
+}
+
+.totalsAmount {
+    font-size: 26pt;
+}
+
+.modal {
+    position: fixed;
+    z-index: 1;
+    width: 250px;
+    background-color: white;
+    box-shadow: black 1px 1px 4px 0;
+}

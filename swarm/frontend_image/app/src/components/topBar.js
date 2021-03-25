@@ -20,6 +20,7 @@ function TopBar(props) {
                     console.log("Setting user: " + userEntry)
                     console.log(response.data)
                     props.setUser(userEntry)
+                    props.setInfo(response.data.result)
                 }, (error) => {
                     alert(error)
                 })
@@ -29,7 +30,6 @@ function TopBar(props) {
     }
 
     function handleChange(event) {
-        console.log(event.target.value)
         setUserEntry(event.target.value)
     }
 
