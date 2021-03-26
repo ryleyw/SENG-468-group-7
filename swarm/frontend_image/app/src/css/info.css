@@ -31,3 +31,17 @@
 .selectedOption :hover {
     cursor: pointer;
 }
+
+.entryContainer {
+    display: flex;
+    flex-direction: row;
+    height: 50px;
+    align-items: center;
+    justify-content: space-evenly;
+    width: 100%;
+}
+
+.entry {
+    height: 40px;
+    width: 80px;
+}
