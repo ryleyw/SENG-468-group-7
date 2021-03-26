@@ -846,7 +846,7 @@ def handle_set_buy_amount(userid, stock, amount):
 		}
 		
 	# user has enough money in their account so now we deduct the money 
-	foundUser['cash'] -= amount
+	foundUser['cash'] = round((foundUser['cash'] - amount), 2)
 	
 	# check if the user already has a buy trigger for this stock
 	
@@ -1011,7 +1011,7 @@ def handle_set_sell_amount(userid, stock, amount):
 			# the trigger is active which means the stocks have already been deducted from the user's account
 			# so first, we need to put those stocks back into their account
 			foundUser['stocks'][stock]['units'] += foundUser['sell_triggers'][stock]['units']
-			foundUser['stocks'][stock]['cost'] += foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']
+			foundUser['stocks'][stock]['cost'] += round((foundUser['sell_triggers'][stock]['units'] * foundUser['sell_triggers'][stock]['unit_price']), 2)
 	
 	foundUser['sell_triggers'][stock] = {
 		'unit_price': None,
@@ -1071,7 +1071,7 @@ def handle_set_sell_trigger(userid, stock, amount):
 		}
 		
 	foundUser['stocks'][stock]['units'] -= foundUser['sell_triggers'][stock]['units']
-	foundUser['stocks'][stock]['cost'] -= amount * foundUser['sell_triggers'][stock]['units']
+	foundUser['stocks'][stock]['cost'] -= round((amount * foundUser['sell_triggers'][stock]['units']), 2)
 	
 	if (foundUser['stocks'][stock]['units'] < 1):
 		# user has no more of this stock so we will remove it from their list

@@ -42,12 +42,12 @@ function CancelButton(props) {
 
 	return (
 		<div>
-            {props.mode == "buy" ?
-            (<button onClick={()=>cancelBuyTrigger()}>
+            {props.mode?
+            (<button onClick={()=>cancelSellTrigger()}>
                 CANCEL
             </button>)
             :
-            (<button onClick={()=>cancelSellTrigger()}>
+            (<button onClick={()=>cancelBuyTrigger()}>
                 CANCEL
             </button>)}
 		</div>

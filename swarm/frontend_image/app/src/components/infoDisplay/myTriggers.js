@@ -13,6 +13,7 @@ function MyTriggers(props) {
     const [stock, setStock] = useState("")
     const [quote, setQuote] = useState(null)
     const [amount, setAmount] = useState(0)
+    const [secondAmount, setSecondAmount] = useState(0)
     const [pending, setPending] = useState(false)
     const [sell, setSell] = useState(false)
 
@@ -33,6 +34,7 @@ function MyTriggers(props) {
 
     function QuoteStock(e) {
         e.preventDefault()
+	console.log(e.target.value)
 	const data = {
 		'command': 'QUOTE',
 		'stock': stock,
@@ -49,23 +51,83 @@ function MyTriggers(props) {
     }
 
     function addBuyTrigger(e) {
-	    e.preventDefault()
-        console.log(stock)
-        console.log(amount)
+	e.preventDefault()
+        const data = {
+		'command': 'SET_BUY_AMOUNT',
+		'stock': stock,
+		'amount': amount,
+		'userid': props.user
+	}
+
+	axios.post('http://localhost:81/', data).
+		then((response) => {
+			console.log(response.data)
+			setPending(true)
+		}, (error) => {
+			alert(error)
+		})
     }
 
     function addSellTrigger(e) {
         e.preventDefault()
-        console.log(stock)
-        console.log(amount)
+        const data = {
+		'command': 'SET_SELL_AMOUNT',
+		'stock': stock,
+		'amount': amount,
+		'userid': props.user
+	}
+
+	axios.post('http://localhost:81/', data).
+		then((response) => {
+			console.log(response.data)
+			setPending(true)
+		}, (error) => {
+			alert(error)
+		})
     }
 
-    function commitBuyTrigger() {
-        console.log("confirm buy trigger")
+    function commitBuyTrigger(e) {
+        e.preventDefault()
+        const data = {
+		'command': 'SET_BUY_TRIGGER',
+		'stock': stock,
+		'amount': secondAmount,
+		'userid': props.user
+	}
+
+	axios.post('http://localhost:81/', data).
+		then((response) => {
+			console.log(response.data)
+			setPending(false)
+			setQuote(null)
+			setShowModal(false)
+			props.setInfo(response.data.result)
+			
+		}, (error) => {
+			alert(error)
+		})
     }
 
-    function commitSellTrigger() {
-        console.log("confirm sell trigger")
+    function commitSellTrigger(e) {
+        e.preventDefault()
+        const data = {
+		'command': 'SET_SELL_TRIGGER',
+		'stock': stock,
+		'amount': secondAmount,
+		'userid': props.user
+	}
+
+	axios.post('http://localhost:81/', data).
+		then((response) => {
+			console.log(response.data)
+			setPending(false)
+			setQuote(null)
+			setShowModal(false)
+			props.setInfo(response.data.result)
+			
+		}, (error) => {
+			alert(error)
+		})
     }
 
     function changeStock(e) {
@@ -75,33 +137,56 @@ function MyTriggers(props) {
     function changeAmount(e) {
 	setAmount(e.target.value)
     }
+
+    function changeSecondAmount(e) {
+	setSecondAmount(e.target.value)
+    }
     
     
-    var stockList = null
+    var buyTriggerList = null
+    var sellTriggerList = null
 
     if (props.info != null) {
-	stockList = Object.keys(props.info.stocks).map((element, index) => 
+	buyTriggerList = Object.keys(props.info.buy_triggers).map((element, index) => 
 		<div className="entryContainer" key={index}>
 		    <div className="entry">
 		        {element}
 		    </div>
 		    <div className="entry">
-		        {props.info.stocks[element].cost}
+		        {props.info.buy_triggers[element].total_cash}
 		    </div>
 		    <div className="entry">
-		        {props.info.stocks[element].units}
+		        {props.info.buy_triggers[element].unit_price}
 		    </div>
 		    <div className="entry">
 		        <StockWatcher user={props.user} stock={element} />
 		    </div>
 		    <div className="entry">
-		        <CancelButton user={props.user} stock={element} setInfo={props.setInfo} mode={sell}/>
+		        <CancelButton user={props.user} stock={element} setInfo={props.setInfo} mode={false}/>
 		    </div>
 		</div>
     	)
+	sellTriggerList = Object.keys(props.info.sell_triggers).map((element, index) =>
+		<div className="entryContainer" key={index}>
+		    <div className="entry">
+		        {element}
+		    </div>
+		    <div className="entry">
+		        {props.info.sell_triggers[element].total_cash}
+		    </div>
+		    <div className="entry">
+		        {props.info.sell_triggers[element].unit_price}
+		    </div>
+		    <div className="entry">
+		        <StockWatcher user={props.user} stock={element} />
+		    </div>
+		    <div className="entry">
+		        <CancelButton user={props.user} stock={element} setInfo={props.setInfo} mode={true}/>
+		    </div>
+		</div>)
     }
 
-    console.log(sell)
+
     const modal = (
         <div className="modal">
             <button onClick={() => setShowModal(false)}>close</button>
@@ -116,7 +201,7 @@ function MyTriggers(props) {
                     BUY TRIGGER
                 </button>
                 }
-                {setSell?
+                {setSell ?
                 <button style={{fontWeight: 'bold'}} onClick={()=>setSell(true)}>
                     SELL TRIGGER
                 </button>
@@ -144,16 +229,18 @@ function MyTriggers(props) {
 			    <div>
                     {sell ?
                     <div>
-                        <div>Sell Trigger Amount: {quote}</div>
-                        <form onSubmit={addBuyTrigger}>
+                        <div>Current Price: {quote}</div>
+			<div>Enter amount to reserve:</div>
+                        <form onSubmit={addSellTrigger}>
                             <input type="number" onChange={changeAmount} value={amount} placeholder="enter amount..."></input>
                             <input type="submit" className="addButton" value="Buy Amount"></input>
                         </form>
                     </div>
                     :
                     <div>
-                        <div>Buy Trigger Amount: {quote}</div>
-                        <form onSubmit={addSellTrigger}>
+                        <div>Current Price: {quote}</div>
+			<div>Enter amount to reserve: </div>
+                        <form onSubmit={addBuyTrigger}>
                             <input type="number" onChange={changeAmount} value={amount} placeholder="enter amount..."></input>
                             <input type="submit" className="addButton" value="Buy Amount"></input>
                         </form>
@@ -166,9 +253,21 @@ function MyTriggers(props) {
                 {pending &&
                     <div> 
                         {sell? 
-                            <button onClick={commitSellTrigger}>CONFIRM SELL TRIGGER</button>
+                            <div>
+				<div>Enter amount to sell at: </div>
+		                <form onSubmit={commitSellTrigger}>
+		                    <input type="number" onChange={changeSecondAmount} value={secondAmount} placeholder="enter amount..."></input>
+		                    <input type="submit" className="addButton" value="SET TRIGGER"></input>
+		                </form>
+		            </div>
                             :
-                            <button onClick={commitBuyTrigger}>CONFIRM BUY TRIGGER</button>
+                            <div>
+				<div>Enter amount to buy at: </div>
+		                <form onSubmit={commitBuyTrigger}>
+		                    <input type="number" onChange={changeSecondAmount} value={secondAmount} placeholder="enter amount..."></input>
+		                    <input type="submit" className="addButton" value="SET TRIGGER"></input>
+		                </form>
+		            </div>
                         }
 			        </div>
                 }
@@ -198,7 +297,8 @@ function MyTriggers(props) {
                     CANCEL?
                 </div>
             </div>
-            {stockList}
+            {buyTriggerList}
+	    {sellTriggerList}
         </div>
     )
 }

@@ -47,7 +47,7 @@ function TotalsDisplay(props) {
         {props.info !=null &&
             (<div>
                 <div className="totalsAmount">
-                {props.info.cash} $
+                {(props.info.cash).toFixed(2)} $
                 </div>
                 <div className="addCash">
                     <button onClick={() => setShowModal(true)}>Add cash</button>

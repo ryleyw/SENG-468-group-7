@@ -117,7 +117,7 @@ function MyStocks(props) {
 		        {element}
 		    </div>
 		    <div className="entry">
-		        {props.info.stocks[element].cost}
+		        {(props.info.stocks[element].cost/props.info.stocks[element].units).toFixed(2)}
 		    </div>
 		    <div className="entry">
 		        {props.info.stocks[element].units}
