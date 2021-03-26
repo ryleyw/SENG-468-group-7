@@ -1174,7 +1174,7 @@ def handle_dumplog():
 
 	logfile = '<?xml version=\"1.0\"?>\n<log>\n'
 
-	loglist = logs.find({}).sort("timestamp")
+	loglist = logs.aggregate([{"$sort": {"timestamp": 1}}], allowDiskUse=True)
 	
 	for log in loglist:
 		if (log['logType'] == 'UserCommandType_0' or log['logType'] == 'UserCommandType_1' or log['logType'] == 'UserCommandType_2' or log['logType'] == 'UserCommandType_3' or log['logType'] == 'UserCommandType_4'):
