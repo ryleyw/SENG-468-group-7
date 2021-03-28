@@ -3,6 +3,11 @@ import axios from 'axios'
 import StockWatcher from './stockWatcher'
 import SellButton from './sellButton'
 
+//BUGS:
+//after sell row above takes on the quote price
+//bought at is total cose - divide by number of stocks.
+//make refresh button
+
 function MyStocks(props) {
 
     const [showModal, setShowModal] = useState(false)

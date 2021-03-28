@@ -28,6 +28,7 @@ function TotalsDisplay(props) {
         setMoneyAdd(0)
     }
 
+    
     const modal = (
         <div className="modal">
             <button onClick={() => setShowModal(false)}>close</button>

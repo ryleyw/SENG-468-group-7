@@ -1,6 +1,7 @@
 import React, {useState} from 'react'
 import '../../css/info.css'
 import MyStocks from './myStocks'
+import MyTriggers from './myTriggers'
 
 function DisplayContainer(props) {
 
@@ -47,7 +48,10 @@ function DisplayContainer(props) {
                  </div>
                 )
                 : selected=="mytriggers" ?
-                (<div className="contentTitle">My Triggers</div>)
+                (<div>
+                    <div className="contentTitle">My Triggers</div>
+                    <MyTriggers user={props.user} info={props.info} setInfo={props.setInfo}/>
+                </div>)
                 : 
                 (<div className="contentTitle">Other</div>)
             }
