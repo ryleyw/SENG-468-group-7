@@ -1,8 +1,7 @@
-To start the cluster, simply execute the command 'docker swarm init' then run ./startCluster.sh
+Troubleshooting:
 
-This only starts the cluster with 1 shard.
-To add more shards, use the ./addShard.sh script.
-Give at least 2-3 minutes after running ./startCluster.sh before trying to add shards.
+
+To add more MongoDB shards, use the ./addShard.sh script.
 (Run the command 'mongo'. If it doesn't connect you, keep waiting and try again.
  If it does connect you, from within the mongos shell, run the command 'sh.status()'
  and look for the 'shards' attribute to make sure s0 has been added already.
@@ -21,40 +20,21 @@ If it isn't being added, you can use the following troubleshooting techniques:
 docker service ls 	# find the conf service for your recently added shard number.
 docker service logs <service_id>	# if this return blank, the mongo_conf image isn't even being created
 
-These two scripts will start the necessary services and also configure them properly.
 
-
-from within the mongos router
-use boat
-db.parts.getShardDistribution() # this shows how the data has been distributed between the shards
+From within the mongos router
+use stocks
+db.users.getShardDistribution() # this shows how the data has been distributed between the shards
 sh.status() # this shows the status of your cluster (make sure all your shards show up)
 
-from outside of mongo
-mongoimport -d <dbname> -c <collection name> --file=<csv filename> --type csv --headerline
-ex. mongoimport -d boat -c parts --file=trimmed.csv --type csv --headerline
-this will add each row from the csv into the db and it should spread it out between the shards
-if it doesn't get spread out across different shards, it might be due to the chunksize being too large
-chunksize is set to 2mb within the init.sh script that gets run by the mong_conf docker image 
 
-
-if you want to deploy the swarm in a distributed fashion, after running
-docker swarm init
-you will be presented with a command that you can run on the other machines to have them join the swarm
-then running the startCluster.sh script on the initial (manager) node should spread the 
-containers out amongst all the worker nodes
-
-
-To add a new service to the swarm that isn't part of the initial docker-compose file
-that gets run with docker stack deploy, use the following command:
-docker service create --network <swarm_network_name> --name <service_name> <image> <commands>
-ex. docker service create --network cluster_default --name temp_mong mongo --port 27017
-
-If you omit the network, or you get the network name wrong, your new service won't be able to
-access the original swarm services by their hostnames (ex. s0rs0, mongos0, etc.)
-docker network ls # to see the networks
-docker network inspect <network_id> # to see which containers are currently on this network
-
-
+If you want to deploy the swarm in a distributed fashion:
+On the manager node, run > docker swarm init
+Copy the full join token command that is printed.
+On all other machines that you want to be worker nodes, paste that join token command.
+(On the VMs, we first need to set them all to the same time since their times will be wildly different and the swarm won't work properly).
+Once all the worker nodes are in the swarm, on the manager node, execute > ./startCluster.sh
+This will start all of the services and containers across all of the nodes in the swarm.
+(On the VMs, you may need to first run the swarm independently on each of them so that they download the necessary docker images first)
 
 Troubleshooting:
 
@@ -76,19 +56,3 @@ docker ps # lists the services
 docker exec -it <service_id_from_ps> bash # opens a bash terminal within that specific container
 docker service update --force <service_name> # reloads the service with updated image (first build the new image)
 			(service name ex. cluster_web_app) this is good for when you update something but don't want to reload the whole swarm
-			
-			
-			
-
-to get docker working with the vm:
-
-sudo cd /usr/local/share/ca-certificates/ 
-sudo mkdir uvic-eng
-sudo cp ~/Downloads/Faculty+of+Engineering+CA.crt ./uvic-eng
-sudo chmod 755 uvic-eng
-sudo chmod 644 uvic-eng/Faculty+of+Engineering+CA.crt 
-sudo update-ca-certificates
-sudo vim /etc/systemd/system/docker.service.d/proxy.conf
-change 192.168.1.1 to 192.168.4.1
-sudo systemctl daemon-reload
-sudo systemctl restart docker 
