@@ -29,7 +29,7 @@ Explicit example usage:
 
 1) Start the VM.
 2) Open a terminal.
-3) Type > sudo -s
+3) Type > sudo -s     (All of the docker commands within the scripts require sudo)
 4) Enter the password.
 5) Navigate to the Desktop (> cd Desktop)
 6) > git clone https://github.com/ryleyw/SENG-468-group-7
